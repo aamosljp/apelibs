@@ -20,7 +20,7 @@ I will be adding more libraries overtime. PRs and issues are also welcome.
 
 All of the scripts are written in bash and use some unix commands
 
-`tools/initialize_library.sh`
+### `tools/initialize_library.sh`
 Copy files from template directory into a new directory specified by the first parameter
 Replaces all occurrences of template with the new library name
 
@@ -40,7 +40,7 @@ ape_line/
     test.c
 ```
 
-`tools/generate_from_source.sh`
+### `tools/generate_from_source.sh`
 Build the library specified by the first argument.
 Combines the api and private files and appends any source files.
 test.c is never included in builds
@@ -67,7 +67,7 @@ ape_line/
     ape_line_main.c
 ```
 
-`tools/build_test.sh`
+### `tools/build_test.sh`
 NOTE: This requires a C compiler
 
 Will build the test file for specified library.
@@ -89,7 +89,7 @@ This should output `bin/ape_line_test` which can then be executed
     - Should have minimal dependencies outside of the standard library
     - You can also create new libraries
 
-### Adding a library
+## Adding a library
 To create a new library, you should first run tools/initialize_library.sh with the library name
 Then inside the api file you should have public function definitions, typedefs, etc.
 If you have private functions, they should be either in *_internal.h or one of your source files
