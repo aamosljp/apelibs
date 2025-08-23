@@ -149,17 +149,17 @@ if [[ ! -z "${options[exclude-files]}" ]]; then
     IFS='.' read -ra exclude_files <<< "${options[exclude-files]}"
 fi
 
-if [[ -z "$lib_name" || ! -d "$lib_name" ]]; then
+if [[ -z "$lib_name" || ! -d "src/$lib_name" ]]; then
     printf "ERROR: %s: No such directory\n" $lib_name
     exit 1
 fi
 
 objfiles=()
-for f in $lib_name/**.c; do
+for f in src/$lib_name/**.c; do
     if [[ ! -z "$exclude_files" ]]; then
         local c=0
         for ef in "${exclude_files[@]}"; do
-            if [[ "$f" == "$lib_name/$ef" ]]; then
+            if [[ "$f" == "src/$lib_name/$ef" ]]; then
                 c=1
             fi
         done
@@ -171,6 +171,8 @@ for f in $lib_name/**.c; do
     objfiles+=("${f/.c/.o}")
 done
 
-run_command "mkdir bin"
-run_command ""$CC" "${objfiles[@]}" -o bin/${lib}_test"
-run_command "rm -rf ${lib}/*.o"
+if [[ ! -d "bin" ]]; then
+    run_command "mkdir bin"
+fi
+run_command ""$CC" "${objfiles[@]}" -o bin/${lib_name}_test"
+run_command "rm -rf src/${lib_name}/*.o"

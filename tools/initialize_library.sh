@@ -159,12 +159,12 @@ if [[ ! "$private_file" =~ ^[0-9a-zA-Z_-]+\.h$ ]]; then
     exit 1
 fi
 
-if [[ -d "$lib_name" ]]; then
+if [[ -d "src/$lib_name" ]]; then
     echo "Library with name $lib_name already exists"
     exit 1
 fi
 
-mkdir "$lib_name"
+mkdir "src/$lib_name"
 afc=$(cat "template/template_api.h")
 pfc=$(cat "template/template_internal.h")
 tfc=$(cat "template/test.c")
@@ -173,6 +173,6 @@ pfc="${pfc//"TEMPLATE"/${lib_name^^}}"
 afc="${afc//"template"/${lib_name,,}}"
 afc="${afc//"TEMPLATE"/${lib_name^^}}"
 tfc="${tfc//"template"/${lib_name,,}}"
-printf "%s\n" "$pfc" > "$lib_name/$private_file"
-printf "%s\n" "$afc" > "$lib_name/$api_file"
-printf "%s\n" "$tfc" > "$lib_name/test.c"
+printf "%s\n" "$pfc" > "src/$lib_name/$private_file"
+printf "%s\n" "$afc" > "src/$lib_name/$api_file"
+printf "%s\n" "$tfc" > "src/$lib_name/test.c"

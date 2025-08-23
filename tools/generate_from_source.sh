@@ -167,7 +167,7 @@ if [[ ! "$private_file" =~ ^[0-9a-zA-Z_-]+\.h$ ]]; then
     exit 1
 fi
 
-if [[ ! -d "$lib_name" ]]; then
+if [[ ! -d "src/$lib_name" ]]; then
     echo "Source for library $lib_name does not exist, create it first"
 fi
 
@@ -182,14 +182,14 @@ generate_private() {
     local pconcat=""
     local private_includes
     declare -A private_includes
-    for f in $lib_name/**.c; do
-        if [[ "$f" == "$lib_name/test.c" ]]; then
+    for f in src/$lib_name/**.c; do
+        if [[ "$f" == "src/$lib_name/test.c" ]]; then
             continue
         fi
         if [[ ! -z "$exclude_files" ]]; then
             local c=0
             for ef in "${exclude_files[@]}"; do
-                if [[ "$f" == "$lib_name/$ef" ]]; then
+                if [[ "$f" == "src/$lib_name/$ef" ]]; then
                     c=1
                 fi
             done
@@ -221,12 +221,12 @@ generate_private() {
 
 private=$(generate_private)
 
-pfile_content=$(cat $lib_name/$private_file)
+pfile_content=$(cat "src/$lib_name/$private_file")
 pfile_content="${pfile_content/"#include \"$api_file\""/}"
-afile_content=$(cat $lib_name/$api_file)
+afile_content=$(cat "src/$lib_name/$api_file")
 apfile_contents=$(printf "%s\n\n#ifdef %s_IMPLEMENTATION\n%s\n\n#endif" "$afile_content" "${lib_name^^}" "$pfile_content")
 full_contents="${apfile_contents/"$private_code_replacement_identifier"/%s}"
-printf "$full_contents\n" "$private" > "$outfile"
+printf "$full_contents\n" "$private" > "include/$outfile"
 # concatenate_source_files
 
 # csrc_files=$(concatenate_source_files)
