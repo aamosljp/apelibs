@@ -221,6 +221,9 @@ generate_private() {
 
 private=$(generate_private)
 
+if [[ ! -d "include" ]]; then
+    mkdir "include"
+fi
 pfile_content=$(cat "src/$lib_name/$private_file")
 pfile_content="${pfile_content/"#include \"$api_file\""/}"
 afile_content=$(cat "src/$lib_name/$api_file")
