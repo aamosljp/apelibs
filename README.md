@@ -88,6 +88,8 @@ This should output `bin/ape_line_test` which can then be executed
     - Each library should be self-contained
     - Should have minimal dependencies outside of the standard library
     - You can also create new libraries
+    - You should run tools/generate_from_source.sh for your library before commit
+    - Ensure that tools/generate_all.sh doesn't have any unwanted side-effects
 
 ## Adding a library
 To create a new library, you should first run tools/initialize_library.sh with the library name
