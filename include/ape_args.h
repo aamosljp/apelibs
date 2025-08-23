@@ -42,7 +42,6 @@ extern "C" {
 
 #ifdef APE_ARGS_IMPLEMENTATION
 
-
 #ifndef APE_ARGS_IMPLEMENTATION_INCLUDED
 #define APE_ARGS_IMPLEMENTATION_INCLUDED
 
@@ -64,8 +63,6 @@ extern "C" {
 #pragma GCC error "Need to define both APE_ARGS_TRUE and APE_ARGS_FALSE or neither"
 #endif
 #endif
-
-
 
 /* BEGIN ape_args_main.c */
 /* END ape_args_main.c */

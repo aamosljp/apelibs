@@ -347,7 +347,6 @@ ape_line_error ape_line_last_error(void);
 
 #ifdef APE_LINE_IMPLEMENTATION
 
-
 #ifndef APE_LINE_IMPLEMENTATION_INCLUDED
 #define APE_LINE_IMPLEMENTATION_INCLUDED
 
@@ -381,7 +380,6 @@ ape_line_error ape_line_last_error(void);
 #include "ape_line_api.h"
 #include <fcntl.h>
 #include <errno.h>
-
 
 /* BEGIN ape_line_editor.c */
 APE_LINE_DEF void ape_line_editor_reset(ape_line_editor *e)
