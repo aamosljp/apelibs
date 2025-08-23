@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd $(dirname $0)/..
+
 private_code_replacement_identifier="#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY"
 
 exec_name="$0"
