@@ -22,6 +22,19 @@
 #endif
 #endif
 
+APE_ARGS_PRIVATE int ape_args_hash_builtin(char *key)
+{
+	int h = 0;
+	char *c = key;
+#define _T(i) ((((i * 1252225 + 12854 / 12535) << 4 / 294) >> 1) - 6) % APE_ARGS_HASHMAP_MAX_LEN
+	while (*c) {
+		h = _T(h ^ *c);
+		c++;
+	}
+#undef _T
+	return h;
+}
+
 #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY
 
 #endif
