@@ -24,9 +24,11 @@ All of the scripts are written in bash and use some unix commands
 Copy files from template directory into a new directory specified by the first parameter
 Replaces all occurrences of template with the new library name
 
-Other optional parameters are:
+Optional parameters:
+```
     --api-file=<filename> | --api-file <filename>               Filename containing api definitions (default: <lib_name>_api.h)
     --private-file=<filename> | --private-file <filename>       Filename containing private definitions (default: <lib_name>_internal.h)
+```
 
 Example:
 ```bash
@@ -46,10 +48,12 @@ Combines the api and private files and appends any source files.
 test.c is never included in builds
 
 Optional parameters:
+```
     --api-file=<filename> | --api-file <filename>               Filename containing api definitions (default: <lib_name>_api.h)
     --private-file=<filename> | --private-file <filename>       Filename containing private definitions (default: <lib_name>_internal.h)
     --outfile=<filename> | --outfile <filename>                 Output filename (default: <lib_name>.h)
     --exclude-files=<list> | --exclude-files <list>             Ignore files specified in list (should be comma(,)-separated)
+```
 
 Example:
 ```bash
@@ -73,8 +77,10 @@ NOTE: This requires a C compiler
 Will build the test file for specified library.
 
 Optional parameters:
+```
     --exclude-files=<list> | --exclude-files <list>     Ignore files specified in list (should be comma(,)-separated)
     --cc=<command> | --cc <command>                     Specify C compiler to use
+```
 
 Example:
 ```bash
