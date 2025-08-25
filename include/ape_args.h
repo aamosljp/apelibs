@@ -281,7 +281,7 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 		       APE_ARGS_ALLOW_POSITIONAL | APE_ARGS_ALLOW_EQ;
 	}
 	int positional_capacity = 2;
-	parsed->positional = (char **)malloc(positional_capacity * sizeof(char *));
+	parsed->positional = (char **)APE_ARGS_MALLOC(positional_capacity * sizeof(char *));
 	int allow_positional = 1;
 	char *arg;
 	if (opts->ignore_first_arg)
@@ -398,7 +398,7 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 					if (parsed->positional_count + 1 >= positional_capacity) {
 						positional_capacity *= 2;
 						parsed->positional =
-							(char **)realloc(parsed->positional, positional_capacity * sizeof(char *));
+							(char **)APE_ARGS_REALLOC(parsed->positional, positional_capacity * sizeof(char *));
 					}
 					parsed->positional[parsed->positional_count++] = strdup(arg);
 					ap = 1;
