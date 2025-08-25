@@ -10,8 +10,8 @@ lib_name="$1"
 
 source "tools/lib/option_parser"
 
-add_option "api-file" "string" "Filename containing api definitions (default: ${lib_name}_api.h)"
-add_option "private-file" "string" "Filename containing private definitions (default: ${lib_name}_internal.h"
+add_option "api-file" "string" "Filename containing api definitions (default: <lib_name>_api.h)"
+add_option "private-file" "string" "Filename containing private definitions (default: <lib_name>_internal.h"
 
 if [[ -z "$lib_name" ]]; then
     print_usage "$exec_name"

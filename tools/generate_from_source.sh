@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd $(dirname $0)/..
+cd "$(dirname "$0")/.." || exit
 
 private_code_replacement_identifier="#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY"
 
@@ -10,32 +10,32 @@ lib_name="$1"
 
 source "tools/lib/option_parser"
 
+add_option "api-file" "string" "Filename containing api definitions (default: <lib_name>_api.h)"
+add_option "private-file" "string" "Filename containing private definitions (default: <lib_name>_internal.h"
+add_option "outfile" "string" "Filename to write the output to (default: <lib_name>.h)"
+add_option "exclude-files" "string" "Exclude all files specified by pattern from release"
+
 if [[ -z "$lib_name" ]]; then
     print_usage "$exec_name"
     exit 1
 fi
 
-add_option "api-file" "string" "Filename containing api definitions (default: ${lib_name}_api.h)"
-add_option "private-file" "string" "Filename containing private definitions (default: ${lib_name}_internal.h"
-add_option "outfile" "string" "Filename to write the output to (default: ${lib_name}.h)"
-add_option "exclude-files" "string" "Exclude all files specified by pattern from release"
-
 parse_options "${@:2}"
 
-api_file=""$lib_name"_api.h"
-private_file=""$lib_name"_internal.h"
-outfile=""$lib_name".h"
+api_file="${lib_name}_api.h"
+private_file="${lib_name}_internal.h"
+outfile="${lib_name}.h"
 IFS=',' read -ra exclude_files <<< "${options[exclude-files]}"
 
-if [[ ! -z "${options[api-file]}" ]]; then
+if [[ -n "${options[api-file]}" ]]; then
     api_file="${options[api-file]}"
 fi
 
-if [[ ! -z "${options[private-file]}" ]]; then
+if [[ -n "${options[private-file]}" ]]; then
     private_file="${options[private-file]}"
 fi
 
-if [[ ! -z "${options[outfile]}" ]]; then
+if [[ -n "${options[outfile]}" ]]; then
     outfile="${options[outfile]}"
 fi
 
@@ -61,19 +61,15 @@ fi
 # declare -A private_includes
 # private_includes=()
 
-ignored_files=()
-
-out="${lib_name}.h"
-
 generate_private() {
     local pconcat=""
     local private_includes
     declare -A private_includes
-    for f in src/$lib_name/**.c; do
+    for f in src/"$lib_name"/**.c; do
         if [[ "$f" == "src/$lib_name/test.c" ]]; then
             continue
         fi
-        if [[ ! -z "$exclude_files" ]]; then
+        if [[ -n "${exclude_files[*]}" ]]; then
             local c=0
             for ef in "${exclude_files[@]}"; do
                 if [[ "$f" == "src/$lib_name/$ef" ]]; then
@@ -85,10 +81,11 @@ generate_private() {
             fi
         fi
         local fcontent
-        fcontent=$(printf "/* BEGIN %s */\n" "$(basename $f)")
-        local raw=$(cat "$f")
+        fcontent=$(printf "/* BEGIN %s */\n" "$(basename "$f")")
+        local raw
+        raw=$(cat "$f")
         IFS=$'\n' 
-        for line in ${raw[@]}; do
+        for line in "${raw[@]}"; do
             if [[ "$line" =~ ^#include ]]; then
                 if [[ "${line:9}" != "\"$private_file\"" ]]; then
                     private_includes[${line:9}]=1
@@ -97,7 +94,7 @@ generate_private() {
                 fcontent=$(printf "%s\n%s" "$fcontent" "$line")
             fi
         done
-        fcontent=$(printf "%s\n/* END %s */\n" "$fcontent" "$(basename $f)")
+        fcontent=$(printf "%s\n/* END %s */\n" "$fcontent" "$(basename "$f")")
         pconcat=$(printf "%s\n\n%s\n" "$pconcat" "$fcontent")
     done
     for key in "${!private_includes[@]}"; do
@@ -115,8 +112,9 @@ pfile_content=$(cat "src/$lib_name/$private_file")
 pfile_content="${pfile_content/"#include \"$api_file\""/}"
 afile_content=$(cat "src/$lib_name/$api_file")
 apfile_contents=$(printf "%s\n\n#ifdef %s_IMPLEMENTATION\n%s\n\n#endif" "$afile_content" "${lib_name^^}" "$pfile_content")
-full_contents="${apfile_contents/"$private_code_replacement_identifier"/%s}"
-printf "$full_contents\n" "$private" > "include/$outfile"
+full_contents="${apfile_contents/"$private_code_replacement_identifier"/$private}"
+
+printf "%s\n" "$full_contents" > "include/$outfile"
 # concatenate_source_files
 
 # csrc_files=$(concatenate_source_files)

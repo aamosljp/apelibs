@@ -106,11 +106,11 @@ print_usage() {
     echo "Usage: $1 <lib_name> [OPTIONS...]"
     for key in "${!available_options[@]}"; do
         if [[ "${available_options["$key"]}" == "boolean" ]]; then
-            echo "--$key|--$key=<yes|no>                ${option_descriptions["$key"]}"
+            echo $'\t'"--$key|--$key=<yes|no>                ${option_descriptions["$key"]}"
         elif [[ "${available_options["$key"]}" == "number" ]]; then
-            echo "--$key=<number>|--$key <number>       ${option_descriptions["$key"]}"
+            echo $'\t'"--$key=<number>|--$key <number>       ${option_descriptions["$key"]}"
         elif [[ "${available_options["$key"]}" == "string" ]]; then
-            echo "--$key=<string>|--$key <string>       ${option_descriptions["$key"]}"
+            echo $'\t'"--$key=<string>|--$key <string>       ${option_descriptions["$key"]}"
         fi
     done
 }
