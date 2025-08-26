@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-cd $(dirname $0)/..
+cd "$(dirname "$0")/.." || exit
 
-private_code_replacement_identifier="#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY"
+# private_code_replacement_identifier="#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY"
 
 exec_name="$0"
 
@@ -20,14 +20,14 @@ fi
 
 parse_options "${@:2}"
 
-api_file=""$lib_name"_api.h"
-private_file=""$lib_name"_internal.h"
+api_file="${lib_name}_api.h"
+private_file="${lib_name}_internal.h"
 
-if [[ ! -z "${options[api-file]}" ]]; then
+if [[ -n "${options[api-file]}" ]]; then
     api_file="${options[api-file]}"
 fi
 
-if [[ ! -z "${options[private-file]}" ]]; then
+if [[ -n "${options[private-file]}" ]]; then
     private_file="${options[private-file]}"
 fi
 

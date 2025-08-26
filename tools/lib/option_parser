@@ -18,7 +18,7 @@ add_option() {
     fi
     for ao in "${available_options[@]}"; do
         if [[ "$ao" == "$option_name" ]]; then
-            echo "ERROR: Redefined option name "$ao""
+            echo "ERROR: Redefined option name $ao"
             exit 1
         fi
     done
@@ -30,8 +30,8 @@ add_option() {
         fi
     done
     if [[ "$is_ot" == "0" ]]; then
-        echo "ERROR: Invalid option type "$ot""
-        echo "Possible types are: ${possible_option_types[@]}"
+        echo "ERROR: Invalid option type $ot"
+        echo "Possible types are: ${possible_option_types[*]}"
     fi
     available_options["$option_name"]="$option_type"
     option_descriptions["$option_name"]="$description"
@@ -52,7 +52,7 @@ parse_options() {
                     fi
                     ;;
                 "string" )
-                    if [[ "$1" =~ "--$akey=" ]]; then
+                    if [[ "$1" =~ ^--$akey=.* ]]; then
                         local s="${1:((${#akey}+3))}"
                         if [[ -z "$s" ]]; then
                             echo "Argument after --$akey= cannot be empty string"
@@ -72,7 +72,7 @@ parse_options() {
                     fi
                     ;;
                 "number" )
-                    if [[ "$1" =~ "--$akey=" ]]; then
+                    if [[ "$1" =~ ^--$akey=.* ]]; then
                         local s="${1:((${#akey}+3))}"
                         if [[ -z "$s" || ! "$s" =~ ^[0-9]+$ ]]; then
                             echo "Argument after --$akey= has to be a number"
@@ -114,3 +114,5 @@ print_usage() {
         fi
     done
 }
+
+export options

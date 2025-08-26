@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd $(dirname $0)/..
+cd "$(dirname "$0")/.." || exit
 
 exec_name="$0"
 
@@ -14,12 +14,12 @@ if [[ -z "$lib_name" ]]; then
 fi
 
 run_command() {
-    echo "CMD: $@"
-    `$@`
+    echo "CMD: $*"
+    eval "$*"
 }
 
 build_file() {
-    run_command ""$CC" -c "$1" -o "${1/.c/.o}""
+    run_command "$CC -c $1 -o ${1/.c/.o}"
 }
 
 add_option "cc" "string" "C compiler to use (default: gcc)"
@@ -27,24 +27,24 @@ add_option "exclude-files" "string" "comma-separated list of files to ignore"
 
 parse_options "${@:2}"
 
-if [[ ! -z "${options[cc]}" ]]; then
+if [[ -n "${options[cc]}" ]]; then
     CC="${options[cc]}"
 fi
 
 exclude_files=()
-if [[ ! -z "${options[exclude-files]}" ]]; then
+if [[ -n "${options[exclude-files]}" ]]; then
     IFS='.' read -ra exclude_files <<< "${options[exclude-files]}"
 fi
 
 if [[ -z "$lib_name" || ! -d "src/$lib_name" ]]; then
-    printf "ERROR: %s: No such directory\n" $lib_name
+    printf "ERROR: %s: No such directory\n" "$lib_name"
     exit 1
 fi
 
 objfiles=()
-for f in src/$lib_name/**.c; do
-    if [[ ! -z "$exclude_files" ]]; then
-        local c=0
+for f in src/"$lib_name"/**.c; do
+    if [[ -n ${exclude_files[0]} ]]; then
+        c=0
         for ef in "${exclude_files[@]}"; do
             if [[ "$f" == "src/$lib_name/$ef" ]]; then
                 c=1
@@ -61,5 +61,5 @@ done
 if [[ ! -d "bin" ]]; then
     run_command "mkdir bin"
 fi
-run_command ""$CC" "${objfiles[@]}" -o bin/${lib_name}_test"
+run_command "$CC ${objfiles[*]} -o bin/${lib_name}_test"
 run_command "rm -rf src/${lib_name}/*.o"
