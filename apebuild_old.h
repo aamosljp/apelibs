@@ -32,7 +32,6 @@ TODO: Documentation
 
 */
 
-
 /* NOTE: Your LS will probably complain about some of these includes,
  * you should just ignore the warnings
  */
@@ -99,10 +98,8 @@ typedef struct {
 	ApeStrList extra_link_args;
 } ApeBuilder;
 
-ApeCmd ape_gen_build_command(char *srcfilename, uint16_t flags,
-			     ApeStrList args);
-ApeCmd ape_gen_link_command(char *outfilename, char **srcfilenames, size_t len,
-			    uint16_t flags, ApeStrList args);
+ApeCmd ape_gen_build_command(char *srcfilename, uint16_t flags, ApeStrList args);
+ApeCmd ape_gen_link_command(char *outfilename, char **srcfilenames, size_t len, uint16_t flags, ApeStrList args);
 ApeCmdList ape_builder_gen_commands(ApeBuilder *builder);
 void ape_builder_append_file(ApeBuilder *builder, char *path);
 int ape_builder_append_dir(ApeBuilder *builder, char *path);
@@ -161,47 +158,40 @@ enum ApeFlag {
 	} while (0);
 
 #define APE_INPUT_DIR(path) ape_builder_append_dir(&ape__builder, path)
-#define APE_INPUT_DIR_REC(path) \
-	ape_builder_append_dir_recursive(&ape__builder, path)
+#define APE_INPUT_DIR_REC(path) ape_builder_append_dir_recursive(&ape__builder, path)
 #define APE_INPUT_FILE(path) ape_builder_append_file(&ape__builder, path)
-#define APE_INCLUDE_DIR(path) \
-	ape_da_append(&ape__builder.extra_build_args, "-I" path)
-#define APE_ADD_LIB(path)                            \
-	ape_da_append(&ape__builder.extra_link_args, \
-		      APE_LINK_ARGS_ADD_LIB(path))
-#define APE_ADD_LIBDIR(path)                         \
-	ape_da_append(&ape__builder.extra_link_args, \
-		      APE_LINK_ARGS_ADD_LIBDIR(path))
+#define APE_INCLUDE_DIR(path) ape_da_append(&ape__builder.extra_build_args, "-I" path)
+#define APE_ADD_LIB(path) ape_da_append(&ape__builder.extra_link_args, APE_LINK_ARGS_ADD_LIB(path))
+#define APE_ADD_LIBDIR(path) ape_da_append(&ape__builder.extra_link_args, APE_LINK_ARGS_ADD_LIBDIR(path))
 
-#define APE_REBUILD(argc, argv)                                                \
-	do {                                                                   \
-		const char *srcpath = __FILE__;                                \
-		assert(argc >= 1);                                             \
-		const char *binpath = argv[0];                                 \
-		int rebuild_needed = ape_needs_rebuild1(binpath, srcpath);     \
-		if (rebuild_needed < 0)                                        \
-			exit(1);                                               \
-		if (rebuild_needed) {                                          \
-			ApeStrBuilder sb = { 0 };                              \
-			ape_sb_append_str(&sb, binpath);                       \
-			ape_sb_append_str(&sb, ".old");                        \
-			ape_da_append(&sb, '\0');                              \
-			if (!ape_rename(binpath, sb.items))                    \
-				exit(1);                                       \
-			ApeCmd rebuild = { 0 };                                \
-			ape_cmd_append(&rebuild,                               \
-				       APE_REBUILD_COMMAND(binpath, srcpath)); \
-			int rebuilt = ape_cmd_run_sync(rebuild);               \
-			if (!rebuilt) {                                        \
-				ape_rename(sb.items, binpath);                 \
-				exit(1);                                       \
-			}                                                      \
-			ApeCmd cmd = { 0 };                                    \
-			ape_da_append_many(&cmd, argv, argc);                  \
-			if (!ape_cmd_run_sync(cmd))                            \
-				exit(1);                                       \
-			exit(0);                                               \
-		}                                                              \
+#define APE_REBUILD(argc, argv)                                                          \
+	do {                                                                             \
+		const char *srcpath = __FILE__;                                          \
+		assert(argc >= 1);                                                       \
+		const char *binpath = argv[0];                                           \
+		int rebuild_needed = ape_needs_rebuild1(binpath, srcpath);               \
+		if (rebuild_needed < 0)                                                  \
+			exit(1);                                                         \
+		if (rebuild_needed) {                                                    \
+			ApeStrBuilder sb = { 0 };                                        \
+			ape_sb_append_str(&sb, binpath);                                 \
+			ape_sb_append_str(&sb, ".old");                                  \
+			ape_da_append(&sb, '\0');                                        \
+			if (!ape_rename(binpath, sb.items))                              \
+				exit(1);                                                 \
+			ApeCmd rebuild = { 0 };                                          \
+			ape_cmd_append(&rebuild, APE_REBUILD_COMMAND(binpath, srcpath)); \
+			int rebuilt = ape_cmd_run_sync(rebuild);                         \
+			if (!rebuilt) {                                                  \
+				ape_rename(sb.items, binpath);                           \
+				exit(1);                                                 \
+			}                                                                \
+			ApeCmd cmd = { 0 };                                              \
+			ape_da_append_many(&cmd, argv, argc);                            \
+			if (!ape_cmd_run_sync(cmd))                                      \
+				exit(1);                                                 \
+			exit(0);                                                         \
+		}                                                                        \
 	} while (0)
 
 #define APEBUILD_MAIN(...)                        \
@@ -227,8 +217,7 @@ enum ApeFlag {
 #pragma GCC error "Define APE_SRC_EXTENSION as your source file extension"
 #endif
 #ifndef APE_OBJ_EXTENSION
-#pragma GCC error \
-	"Define APE_OBJ_EXTENSION as your object file extension (appended to source file name)"
+#pragma GCC error "Define APE_OBJ_EXTENSION as your object file extension (appended to source file name)"
 #endif
 #ifndef APE_BUILD_SRC_ARGS
 #pragma GCC error("Define APE_BUILD_SRC_ARGS(infile, outfile)")
@@ -238,51 +227,41 @@ enum ApeFlag {
 #endif
 
 #ifndef APE_LINK_ARGS_ADD_LIB
-#pragma GCC warning \
-	"If you have library dependencies, you should define APE_LINK_ARGS_ADD_LIB(lib)"
+#pragma GCC warning "If you have library dependencies, you should define APE_LINK_ARGS_ADD_LIB(lib)"
 #endif
 
 #ifndef APE_LINK_ARGS_ADD_LIBDIR
-#pragma GCC warning \
-	"If you have a custom library directory, you should define APE_LINK_ARGS_ADD_LIBDIR(dir)"
+#pragma GCC warning "If you have a custom library directory, you should define APE_LINK_ARGS_ADD_LIBDIR(dir)"
 #endif
 
 #ifndef APE_LINK_ARGS_SHARED_LIB
-#pragma GCC warning \
-	"If you are building libraries, you should define APE_LINK_ARGS_SHARED_LIB"
+#pragma GCC warning "If you are building libraries, you should define APE_LINK_ARGS_SHARED_LIB"
 #endif
 
 #define APE_DA_INIT_CAP 256
 
-#define ape_da_append(da, x)                                              \
-	do {                                                              \
-		if ((da)->count + 1 >= (da)->capacity) {                  \
-			(da)->capacity = (da)->capacity == 0 ?            \
-						 APE_DA_INIT_CAP :        \
-						 (da)->capacity * 2;      \
-			(da)->items = (typeof((da)->items))realloc(       \
-				(da)->items,                              \
-				(da)->capacity * sizeof((da)->items[0])); \
-		}                                                         \
-		(da)->items[(da)->count++] = x;                           \
+#define ape_da_append(da, x)                                                                                              \
+	do {                                                                                                              \
+		if ((da)->count + 1 >= (da)->capacity) {                                                                  \
+			(da)->capacity = (da)->capacity == 0 ? APE_DA_INIT_CAP : (da)->capacity * 2;                      \
+			(da)->items = (typeof((da)->items))realloc((da)->items, (da)->capacity * sizeof((da)->items[0])); \
+		}                                                                                                         \
+		(da)->items[(da)->count++] = x;                                                                           \
 	} while (0)
 
-#define ape_da_append_many(da, xs, n)                                        \
-	do {                                                                 \
-		if ((da)->count + (n) > (da)->capacity) {                    \
-			if ((da)->capacity == 0) {                           \
-				(da)->capacity = APE_DA_INIT_CAP;            \
-			}                                                    \
-			while ((da)->count + (n) > (da)->capacity) {         \
-				(da)->capacity *= 2;                         \
-			}                                                    \
-			(da)->items = realloc((da)->items,                   \
-					      (da)->capacity *               \
-						      sizeof(*(da)->items)); \
-		}                                                            \
-		memcpy((da)->items + (da)->count, (xs),                      \
-		       (n) * sizeof(*(da)->items));                          \
-		(da)->count += (n);                                          \
+#define ape_da_append_many(da, xs, n)                                                              \
+	do {                                                                                       \
+		if ((da)->count + (n) > (da)->capacity) {                                          \
+			if ((da)->capacity == 0) {                                                 \
+				(da)->capacity = APE_DA_INIT_CAP;                                  \
+			}                                                                          \
+			while ((da)->count + (n) > (da)->capacity) {                               \
+				(da)->capacity *= 2;                                               \
+			}                                                                          \
+			(da)->items = realloc((da)->items, (da)->capacity * sizeof(*(da)->items)); \
+		}                                                                                  \
+		memcpy((da)->items + (da)->count, (xs), (n) * sizeof(*(da)->items));               \
+		(da)->count += (n);                                                                \
 	} while (0)
 
 #define ape_da_free(da) free(da.items)
@@ -294,10 +273,8 @@ enum ApeFlag {
 		ape_da_append_many(sb, s, n); \
 	} while (0)
 
-#define ape_cmd_append(cmd, ...)                                      \
-	ape_da_append_many(cmd, ((const char *[]){ __VA_ARGS__ }),    \
-			   (sizeof((const char *[]){ __VA_ARGS__ }) / \
-			    sizeof(const char *)))
+#define ape_cmd_append(cmd, ...) \
+	ape_da_append_many(cmd, ((const char *[]){ __VA_ARGS__ }), (sizeof((const char *[]){ __VA_ARGS__ }) / sizeof(const char *)))
 
 #define ape_cmd_free(cmd) free(cmd.items)
 
@@ -334,8 +311,7 @@ ApeProc ape_run_cmd_async(ApeCmd cmd)
 
 	pid_t cpid = fork();
 	if (cpid < 0) {
-		fprintf(stderr, "ERROR: Could not fork child process: %s\n",
-			strerror(errno));
+		fprintf(stderr, "ERROR: Could not fork child process: %s\n", strerror(errno));
 		return APE_INVALID_PROC;
 	}
 	if (cpid == 0) {
@@ -343,9 +319,7 @@ ApeProc ape_run_cmd_async(ApeCmd cmd)
 		ape_da_append_many(&cmd_null, cmd.items, cmd.count);
 		ape_cmd_append(&cmd_null, NULL);
 		if (execvp(cmd.items[0], (char *const *)cmd_null.items) < 0) {
-			fprintf(stderr,
-				"ERROR: Could not exec child process: %s\n",
-				strerror(errno));
+			fprintf(stderr, "ERROR: Could not exec child process: %s\n", strerror(errno));
 			exit(1);
 		}
 		assert(0 && "Ureachable");
@@ -378,8 +352,7 @@ int ape_proc_wait(int proc)
 			break;
 		}
 		if (WIFSIGNALED(wstatus)) {
-			fprintf(stderr, "Command was terminated by %s\n",
-				strsignal(WTERMSIG(wstatus)));
+			fprintf(stderr, "Command was terminated by %s\n", strsignal(WTERMSIG(wstatus)));
 			return 0;
 		}
 	}
@@ -410,8 +383,7 @@ int ape_rename(const char *oldname, const char *newname)
 		fprintf(stderr, "INFO: %s > %s\n", oldname, newname);
 		return 1;
 	}
-	fprintf(stderr, "ERROR: Couldn't rename file %s: %s\n", oldname,
-		strerror(errno));
+	fprintf(stderr, "ERROR: Couldn't rename file %s: %s\n", oldname, strerror(errno));
 	return 0;
 }
 
@@ -433,9 +405,7 @@ int ape_needs_rebuild(const char *outfile, char **infiles, size_t len)
 	struct stat ins;
 	for (size_t i = 0; i < len; i++) {
 		if (stat(infiles[i], &ins) != 0) {
-			fprintf(stderr,
-				"ERROR: Failed to get stat (of file %s): %s\n",
-				infiles[i], strerror(errno));
+			fprintf(stderr, "ERROR: Failed to get stat (of file %s): %s\n", infiles[i], strerror(errno));
 			return 1;
 		}
 		if (ins.st_mtime > outs.st_mtime) {
@@ -464,20 +434,17 @@ int ape_endswith(char *s, const char *suffix)
 ApeCmd ape_gen_build_command(char *srcfilename, uint16_t flags, ApeStrList args)
 {
 	ApeCmd cmd = { 0 };
-	if (!(ape_needs_rebuild1(ape_objfile_name(srcfilename), srcfilename) ||
-	      ((flags >> APE_FLAG_REBUILD) && 1)))
+	if (!(ape_needs_rebuild1(ape_objfile_name(srcfilename), srcfilename) || ((flags >> APE_FLAG_REBUILD) && 1)))
 		return cmd;
 	ape_cmd_append(&cmd, APECC);
 	for (size_t i = 0; i < args.count; i++) {
 		ape_cmd_append(&cmd, args.items[i]);
 	}
-	ape_cmd_append(&cmd, APE_BUILD_SRC_ARGS(srcfilename,
-						ape_objfile_name(srcfilename)));
+	ape_cmd_append(&cmd, APE_BUILD_SRC_ARGS(srcfilename, ape_objfile_name(srcfilename)));
 	return cmd;
 }
 
-ApeCmd ape_gen_link_command(char *outfilename, char **srcfilenames, size_t len,
-			    uint16_t flags, ApeStrList args)
+ApeCmd ape_gen_link_command(char *outfilename, char **srcfilenames, size_t len, uint16_t flags, ApeStrList args)
 {
 	ApeCmd cmd = { 0 };
 	char **objfilenames = malloc(len);
@@ -492,15 +459,13 @@ ApeCmd ape_gen_link_command(char *outfilename, char **srcfilenames, size_t len,
 	ape_sb_append_str(&sb, APE_OUTPUT_DIR);
 	if ((flags >> APE_FLAG_SHARED_LIB) & 1) {
 #ifndef APE_LIB_PREFIX
-#pragma GCC warning \
-	"You should define APE_LIB_PREFIX if you are building libraries"
+#pragma GCC warning "You should define APE_LIB_PREFIX if you are building libraries"
 #else
 		ape_sb_append_str(&sb, APE_LIB_PREFIX);
 #endif
 		ape_sb_append_str(&sb, outfilename);
 #ifndef APE_LIB_SUFFIX
-#pragma GCC warning \
-	"You should define APE_LIB_SUFFIX if you are building libraries"
+#pragma GCC warning "You should define APE_LIB_SUFFIX if you are building libraries"
 #else
 		ape_sb_append_str(&sb, APE_LIB_SUFFIX);
 #endif
@@ -511,8 +476,7 @@ ApeCmd ape_gen_link_command(char *outfilename, char **srcfilenames, size_t len,
 		ape_da_append(&sb, 0);
 		ape_cmd_append(&cmd, APE_LINK_ARGS(sb.items));
 	}
-	if (!(ape_needs_rebuild(sb.items, objfilenames, len) ||
-	      ((flags >> APE_FLAG_REBUILD) & 1)))
+	if (!(ape_needs_rebuild(sb.items, objfilenames, len) || ((flags >> APE_FLAG_REBUILD) & 1)))
 		return (ApeCmd){ 0 };
 	for (size_t i = 0; i < len; i++) {
 		ape_cmd_append(&cmd, ape_objfile_name(srcfilenames[i]));
@@ -530,15 +494,11 @@ ApeCmdList ape_builder_gen_commands(ApeBuilder *builder)
 {
 	ApeCmdList cl = { 0 };
 	for (size_t i = 0; i < builder->infiles.count; i++) {
-		ApeCmd c = ape_gen_build_command(builder->infiles.items[i],
-						 builder->flags,
-						 builder->extra_build_args);
+		ApeCmd c = ape_gen_build_command(builder->infiles.items[i], builder->flags, builder->extra_build_args);
 		if (c.items)
 			ape_da_append(&cl, c);
 	}
-	ApeCmd c = ape_gen_link_command(builder->outfile,
-					builder->infiles.items,
-					builder->infiles.count, builder->flags,
+	ApeCmd c = ape_gen_link_command(builder->outfile, builder->infiles.items, builder->infiles.count, builder->flags,
 					builder->extra_link_args);
 	if (c.items)
 		ape_da_append(&cl, c);
@@ -571,13 +531,11 @@ int ape_builder_append_dir(ApeBuilder *builder, char *path)
 		ape_da_append(&pathbuilder, 0);
 		struct stat statbuf;
 		if (stat(pathbuilder.items, &statbuf) < 0) {
-			fprintf(stderr, "ERROR: Could not get stat of %s: %s\n",
-				pathbuilder.items, strerror(errno));
+			fprintf(stderr, "ERROR: Could not get stat of %s: %s\n", pathbuilder.items, strerror(errno));
 			return 1;
 		}
 		if ((statbuf.st_mode & S_IFMT) == S_IFREG)
-			ape_builder_append_file(builder,
-						strdup(pathbuilder.items));
+			ape_builder_append_file(builder, strdup(pathbuilder.items));
 		ape_da_free(pathbuilder);
 	}
 	return 0;
@@ -602,18 +560,15 @@ int ape_builder_append_dir_recursive(ApeBuilder *builder, char *path)
 		ape_da_append(&pathbuilder, 0);
 		struct stat statbuf;
 		if (stat(pathbuilder.items, &statbuf) < 0) {
-			fprintf(stderr, "ERROR: Could not get stat of %s: %s\n",
-				pathbuilder.items, strerror(errno));
+			fprintf(stderr, "ERROR: Could not get stat of %s: %s\n", pathbuilder.items, strerror(errno));
 			return 1;
 		}
 		if ((statbuf.st_mode & S_IFMT) == S_IFDIR)
-			ape_builder_append_dir_recursive(
-				builder, strdup(pathbuilder.items));
+			ape_builder_append_dir_recursive(builder, strdup(pathbuilder.items));
 		if (!ape_endswith(entry->d_name, APE_SRC_EXTENSION))
 			continue;
 		if ((statbuf.st_mode & S_IFMT) == S_IFREG)
-			ape_builder_append_file(builder,
-						strdup(pathbuilder.items));
+			ape_builder_append_file(builder, strdup(pathbuilder.items));
 		ape_da_free(pathbuilder);
 	}
 	return 0;
@@ -632,8 +587,7 @@ int ape_run_builder(ApeBuilder *builder)
 int ape_run(int argc, char **argv)
 {
 	for (size_t i = 0; i < ape__builder_list.count; i++) {
-		fprintf(stderr, "INFO: Building %s...\n",
-			ape__builder_list.items[i].outfile);
+		fprintf(stderr, "INFO: Building %s...\n", ape__builder_list.items[i].outfile);
 		int p = ape_run_builder(&ape__builder_list.items[i]);
 		if (!p)
 			return 1;
