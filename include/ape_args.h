@@ -257,11 +257,11 @@ APE_ARGS_PRIVATE int ape_args_hash_builtin(char *key)
 	return h;
 }
 
-#include "ape_args_api.h"
-#include <stdlib.h>
-
-#include "ape_args_internal.h"
 #include <string.h>
+#include <stdlib.h>
+#include "ape_args_api.h"
+
+/* BEGIN ape_args_main.c */
 
 APE_ARGS_DEF inline char *ape_args_shift_args(int *argc, char ***argv)
 {
@@ -287,24 +287,19 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 	if (opts->ignore_first_arg)
 		arg = ape_args_shift_args(opts->argc, opts->argv);
 	while ((arg = ape_args_shift_args(opts->argc, opts->argv))) {
-		if (opts->stop_at #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY strcmp(
-			    opts->stop_at, arg) == 0)
+		if (opts->stop_at && strcmp(opts->stop_at, arg) == 0)
 			break;
 		char *eq;
 		int ap = 0;
-		if (!ap #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY(
-			    mode #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY(APE_ARGS_ALLOW_DASH | APE_ARGS_ALLOW_DASH_VAL |
-										  APE_ARGS_ALLOW_DASH_EQ))) {
+		if (!ap && (mode & (APE_ARGS_ALLOW_DASH | APE_ARGS_ALLOW_DASH_VAL | APE_ARGS_ALLOW_DASH_EQ))) {
 			if (strncmp(arg, "-", 1) == 0) {
 				int ddash = strncmp(arg, "--", 2) == 0;
-				if (!(mode #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY
-					      APE_ARGS_ALLOW_SINGLE_DASH) #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY !ddash) {
+				if (!(mode & APE_ARGS_ALLOW_SINGLE_DASH) & !ddash) {
 					fprintf(stderr, "Need '--' instead of a single '-'\n");
 					return -1;
 				}
 				char *act = arg + (ddash ? 2 : 1);
-				if (!ap #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY
-					    mode #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY APE_ARGS_ALLOW_DASH_EQ) {
+				if (!ap && mode & APE_ARGS_ALLOW_DASH_EQ) {
 					if (strchr(act, '=') != NULL) {
 						if (strchr(act, '=') != act) {
 							int n = strlen(act);
@@ -318,8 +313,7 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 								fprintf(stderr, "Cannot have more than one '=' in arg\n");
 								return -1;
 							}
-							APE_ARGS_HASHMAP_SET_KEY(
-								#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYparsed->map, key, val);
+							APE_ARGS_HASHMAP_SET_KEY(&parsed->map, key, val);
 							allow_positional = 0;
 							ap = 1;
 						} else {
@@ -328,10 +322,9 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 						}
 					}
 				}
-				if (!ap #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY
-					    mode #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY APE_ARGS_ALLOW_DASH) {
+				if (!ap && mode & APE_ARGS_ALLOW_DASH) {
 					if (!strchr(act, '=')) {
-						if (mode #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY APE_ARGS_ALLOW_DASH_VAL) {
+						if (mode & APE_ARGS_ALLOW_DASH_VAL) {
 							int old_argc = *(opts->argc);
 							char **old_argv = *(opts->argv);
 							char *narg = ape_args_shift_args(opts->argc, opts->argv);
@@ -339,16 +332,13 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 								*(opts->argc) = old_argc;
 								*(opts->argv) = old_argv;
 							} else {
-								APE_ARGS_HASHMAP_SET_KEY(
-									#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYparsed->map, act,
-									narg);
+								APE_ARGS_HASHMAP_SET_KEY(&parsed->map, act, narg);
 								allow_positional = 0;
 								ap = 1;
 							}
 						}
 						if (!ap) {
-							APE_ARGS_HASHMAP_SET_KEY(
-								#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYparsed->map, act, "true");
+							APE_ARGS_HASHMAP_SET_KEY(&parsed->map, act, "true");
 							allow_positional = 0;
 							ap = 1;
 						}
@@ -359,14 +349,12 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 				}
 			}
 		}
-		if (!ap #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY(
-			    mode #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY(APE_ARGS_ALLOW_EQ | APE_ARGS_ALLOW_POSITIONAL))) {
+		if (!ap && (mode & (APE_ARGS_ALLOW_EQ | APE_ARGS_ALLOW_POSITIONAL))) {
 			if (strncmp(arg, "-", 1) == 0) {
 				fprintf(stderr, "Cannot start with '-'\n");
 				return -1;
 			}
-			if (!ap #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY(
-				    mode #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY APE_ARGS_ALLOW_EQ)) {
+			if (!ap && (mode & APE_ARGS_ALLOW_EQ)) {
 				if (strchr(arg, '=') != NULL) {
 					int n = strlen(arg);
 					if (strchr(arg, '=') == arg) {
@@ -383,13 +371,12 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 						fprintf(stderr, "Cannot have more than one '='\n");
 						return -1;
 					}
-					APE_ARGS_HASHMAP_SET_KEY(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYparsed->map, key, val);
+					APE_ARGS_HASHMAP_SET_KEY(&parsed->map, key, val);
 					allow_positional = 0;
 					ap = 1;
 				}
 			}
-			if (!ap #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY(
-				    mode #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY APE_ARGS_ALLOW_POSITIONAL)) {
+			if (!ap && (mode & APE_ARGS_ALLOW_POSITIONAL)) {
 				if (allow_positional || opts->allow_positional_anywhere) {
 					if (strchr(arg, '=') != NULL) {
 						fprintf(stderr, "Arg cannot contain '='\n");
@@ -415,8 +402,6 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 	}
 	return *opts->argc;
 }
-
-/* BEGIN ape_args_main.c */
 /* END ape_args_main.c */
 
 #endif

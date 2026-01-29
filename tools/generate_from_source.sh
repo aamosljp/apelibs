@@ -81,24 +81,27 @@ generate_private() {
             fi
         fi
         local fcontent
-        fcontent=$(printf "/* BEGIN %s */\n" "$(basename "$f")")
-        local raw
-        raw=$(cat "$f")
-        IFS=$'\n' 
-        for line in "${raw[@]}"; do
+        fcontent="/* BEGIN $(basename "$f") */"
+        while IFS= read -r line || [[ -n "$line" ]]; do
             if [[ "$line" =~ ^#include ]]; then
                 if [[ "${line:9}" != "\"$private_file\"" ]]; then
                     private_includes[${line:9}]=1
                 fi
             else
-                fcontent=$(printf "%s\n%s" "$fcontent" "$line")
+                fcontent="$fcontent
+$line"
             fi
-        done
-        fcontent=$(printf "%s\n/* END %s */\n" "$fcontent" "$(basename "$f")")
-        pconcat=$(printf "%s\n\n%s\n" "$pconcat" "$fcontent")
+        done < "$f"
+        fcontent="$fcontent
+/* END $(basename "$f") */"
+        pconcat="$pconcat
+
+$fcontent
+"
     done
     for key in "${!private_includes[@]}"; do
-        pconcat=$(printf "#include %s\n%s" "$key" "$pconcat")
+        pconcat="#include $key
+$pconcat"
     done
     echo "$pconcat"
 }
@@ -111,10 +114,19 @@ fi
 pfile_content=$(cat "src/$lib_name/$private_file")
 pfile_content="${pfile_content/"#include \"$api_file\""/}"
 afile_content=$(cat "src/$lib_name/$api_file")
-apfile_contents=$(printf "%s\n\n#ifdef %s_IMPLEMENTATION\n%s\n\n#endif" "$afile_content" "${lib_name^^}" "$pfile_content")
-full_contents="${apfile_contents/"$private_code_replacement_identifier"/$private}"
+apfile_contents="$afile_content
 
-printf "%s\n" "$full_contents" > "include/$outfile"
+#ifdef ${lib_name^^}_IMPLEMENTATION
+$pfile_content
+
+#endif"
+# Escape special characters in the replacement string for bash parameter substitution
+# & refers to the matched pattern, \ is interpreted as escape
+private_escaped="${private//\\/\\\\}"  # First escape backslashes
+private_escaped="${private_escaped//&/\\&}"  # Then escape ampersands
+full_contents="${apfile_contents/"$private_code_replacement_identifier"/$private_escaped}"
+
+printf '%s\n' "$full_contents" > "include/$outfile"
 # concatenate_source_files
 
 # csrc_files=$(concatenate_source_files)

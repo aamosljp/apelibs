@@ -40,6 +40,7 @@ static int tests_failed = 0;
 #define ASSERT_STR_EQ(a, b) ASSERT(strcmp((a), (b)) == 0)
 #define ASSERT_NULL(a) ASSERT((a) == NULL)
 #define ASSERT_NOT_NULL(a) ASSERT((a) != NULL)
+#define ASSERT_FILE_EXISTS(path) ASSERT(access((path), F_OK) == 0)
 
 #define RUN_TEST(name) run_test_##name()
 
@@ -586,6 +587,28 @@ TEST(log_set_level)
 }
 
 /* ============================================================================
+ * Download Module Tests
+ * ============================================================================ */
+
+TEST(dl_fetch)
+{
+	ape_dl_fetch(APE_URL("raw.githubusercontent.com/aamosljp/apelibs/refs/heads/master/src/apebuild/test_file", "/aamosljp/apelibs"),
+		     "/tmp/apebuild", 1024, NULL);
+	ASSERT_FILE_EXISTS("/tmp/apebuild/test_file");
+	FILE *fp = fopen("/tmp/apebuild/test_file", "r");
+	FILE *ofp = fopen("src/apebuild/test_file", "r");
+	char buf1[1024];
+	char buf2[1024];
+	size_t len1 = fread(buf1, 1, sizeof(buf1), fp);
+	size_t len2 = fread(buf2, 1, sizeof(buf2), ofp);
+	ASSERT_EQ(len1, len2);
+	ASSERT_STR_EQ(buf1, buf2);
+	fclose(fp);
+	fclose(ofp);
+	remove("/tmp/apebuild/test_file");
+}
+
+/* ============================================================================
  * Test Runner
  * ============================================================================ */
 
@@ -672,6 +695,13 @@ static void run_log_tests(void)
 	printf("\n");
 }
 
+static void run_dl_tests(void)
+{
+	printf("Download module tests:\n");
+	RUN_TEST(dl_fetch);
+	printf("\n");
+}
+
 int main(void)
 {
 	printf("=== Apebuild Unit Tests ===\n\n");
@@ -682,6 +712,7 @@ int main(void)
 	run_fs_tests();
 	run_cmd_tests();
 	run_log_tests();
+	run_dl_tests();
 
 	printf("=== Results ===\n");
 	printf("Tests run:    %d\n", tests_run);

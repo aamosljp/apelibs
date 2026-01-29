@@ -488,8 +488,112 @@ void ape_cmdlist_free(ApeCmdList *list);
 	} while (0)
 
 /* ============================================================================
+ * Download Module (ape_dl)
+ * ============================================================================ */
+
+typedef struct {
+	const char *domain;
+	const char *path;
+} ApeUrl;
+
+#define APE_URL(d, p) ((ApeUrl){ .domain = d, .path = p })
+
+typedef enum {
+	APE_DL_OK,
+	APE_DL_ERR_NETWORK,
+	APE_DL_ERR_DNS,
+	APE_DL_ERR_TIMEOUT,
+	APE_DL_ERR_HTTP,
+	APE_DL_ERR_SSL,
+	APE_DL_ERR_WRITE
+} ApeDownloadError;
+
+typedef struct {
+	int timeout;
+	int follow_redirects;
+	int max_redirects;
+	int verify_ssl;
+	char *user_agent;
+	ApeStrList headers;
+} ApeDownloadOptions;
+
+ApeDownloadOptions ape_dl_options_default(void);
+
+typedef struct {
+	size_t total_bytes;
+	size_t downloaded_bytes;
+	double speed;
+} ApeDownloadProgress;
+
+typedef void (*ApeDownloadCallback)(ApeDownloadProgress *progress, void *userdata);
+
+int ape_dl_fetch(const ApeUrl url, const char *output, size_t size, ApeDownloadOptions *options);
+int ape_dl_fetch_progress(const char *url, const char *output, ApeDownloadOptions *options, ApeDownloadCallback callback, void *userdata);
+
+/* ============================================================================
  * Core Build Module (ape_build)
  * ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+ * Handle Types and Storage Configuration
+ *
+ * All build objects (toolchains, builders, tasks) are stored in fixed-size
+ * internal arrays and referenced by handles (integer IDs) rather than pointers.
+ * This simplifies memory management and avoids dangling pointer issues.
+ *
+ * Users can override the maximum counts by defining these macros before
+ * including this header.
+ * ---------------------------------------------------------------------------- */
+
+#ifndef APE_MAX_TOOLCHAINS
+#define APE_MAX_TOOLCHAINS 16
+#endif
+
+#ifndef APE_MAX_BUILDERS
+#define APE_MAX_BUILDERS 64
+#endif
+
+#ifndef APE_MAX_TASKS
+#define APE_MAX_TASKS 1024
+#endif
+
+#ifndef APE_MAX_TASK_DEPS
+#define APE_MAX_TASK_DEPS 64
+#endif
+
+#ifndef APE_MAX_BUILDER_DEPS
+#define APE_MAX_BUILDER_DEPS 32
+#endif
+
+/* Handle types - all are int32_t indices into internal arrays */
+typedef int32_t ApeToolchainHandle;
+typedef int32_t ApeBuilderHandle;
+typedef int32_t ApeTaskHandle;
+
+#define APE_INVALID_TOOLCHAIN ((ApeToolchainHandle) - 1)
+#define APE_INVALID_BUILDER ((ApeBuilderHandle) - 1)
+#define APE_INVALID_TASK ((ApeTaskHandle) - 1)
+
+/* Handle list types for dependencies */
+typedef struct {
+	size_t count;
+	ApeTaskHandle items[APE_MAX_TASK_DEPS];
+} ApeTaskDepList;
+
+typedef struct {
+	size_t count;
+	ApeBuilderHandle items[APE_MAX_BUILDER_DEPS];
+} ApeBuilderDepList;
+
+typedef struct {
+	size_t count;
+	ApeTaskHandle items[APE_MAX_TASKS];
+} ApeTaskHandleList;
+
+typedef struct {
+	size_t count;
+	ApeBuilderHandle items[APE_MAX_BUILDERS];
+} ApeBuilderHandleList;
 
 /* Verbosity levels */
 typedef enum {
@@ -509,12 +613,12 @@ typedef enum {
 
 /* Task types */
 typedef enum {
-	APE_TASK_COMPILE, /* Compile source to object */
-	APE_TASK_LINK, /* Link objects to target */
-	APE_TASK_ARCHIVE, /* Create static library */
-	APE_TASK_COMMAND, /* Run arbitrary command */
-	APE_TASK_COPY, /* Copy file */
-	APE_TASK_MKDIR /* Create directory */
+	APE_TASK_TYPE_COMPILE, /* Compile source to object */
+	APE_TASK_TYPE_LINK, /* Link objects to target */
+	APE_TASK_TYPE_ARCHIVE, /* Create static library */
+	APE_TASK_TYPE_COMMAND, /* Run arbitrary command */
+	APE_TASK_TYPE_COPY, /* Copy file */
+	APE_TASK_TYPE_MKDIR /* Create directory */
 } ApeTaskType;
 
 /* Task status */
@@ -526,17 +630,12 @@ typedef enum {
 	APE_TASK_SKIPPED /* Already up-to-date */
 } ApeTaskStatus;
 
-/* Forward declarations */
-typedef struct ApeToolchain ApeToolchain;
-typedef struct ApeBuildCtx ApeBuildCtx;
-typedef struct ApeBuilder ApeBuilder;
-typedef struct ApeTask ApeTask;
-
 /* ----------------------------------------------------------------------------
  * Toolchain - Compiler/linker configuration
  * ---------------------------------------------------------------------------- */
 
-struct ApeToolchain {
+typedef struct {
+	int in_use;
 	char *name; /* Toolchain name (e.g., "gcc", "clang") */
 	char *cc; /* C compiler command */
 	char *cxx; /* C++ compiler command */
@@ -549,33 +648,31 @@ struct ApeToolchain {
 	char *lib_prefix; /* Library prefix (e.g., "lib") */
 	ApeStrList default_cflags;
 	ApeStrList default_ldflags;
-};
+} ApeToolchain;
 
-ApeToolchain *ape_toolchain_new(const char *name);
-void ape_toolchain_free(ApeToolchain *tc);
-ApeToolchain *ape_toolchain_clone(const ApeToolchain *tc);
-ApeToolchain *ape_toolchain_gcc(void);
-ApeToolchain *ape_toolchain_clang(void);
-void ape_toolchain_set_cc(ApeToolchain *tc, const char *cc);
-void ape_toolchain_set_cxx(ApeToolchain *tc, const char *cxx);
-void ape_toolchain_set_ld(ApeToolchain *tc, const char *ld);
-void ape_toolchain_set_ar(ApeToolchain *tc, const char *ar);
-void ape_toolchain_add_cflag(ApeToolchain *tc, const char *flag);
-void ape_toolchain_add_ldflag(ApeToolchain *tc, const char *flag);
+/* Toolchain management */
+ApeToolchainHandle ape_toolchain_new(const char *name);
+void ape_toolchain_free(ApeToolchainHandle handle);
+ApeToolchainHandle ape_toolchain_clone(ApeToolchainHandle handle);
+ApeToolchainHandle ape_toolchain_gcc(void);
+ApeToolchainHandle ape_toolchain_clang(void);
+ApeToolchain *ape_toolchain_get(ApeToolchainHandle handle);
+int ape_toolchain_valid(ApeToolchainHandle handle);
+
+/* Toolchain configuration */
+void ape_toolchain_set_cc(ApeToolchainHandle handle, const char *cc);
+void ape_toolchain_set_cxx(ApeToolchainHandle handle, const char *cxx);
+void ape_toolchain_set_ld(ApeToolchainHandle handle, const char *ld);
+void ape_toolchain_set_ar(ApeToolchainHandle handle, const char *ar);
+void ape_toolchain_add_cflag(ApeToolchainHandle handle, const char *flag);
+void ape_toolchain_add_ldflag(ApeToolchainHandle handle, const char *flag);
 
 /* ----------------------------------------------------------------------------
  * Task - Individual build operation
  * ---------------------------------------------------------------------------- */
 
-/* Task dependency list */
 typedef struct {
-	size_t capacity;
-	size_t count;
-	ApeTask **items;
-} ApeTaskList;
-
-struct ApeTask {
-	int id; /* Unique task ID within builder */
+	int in_use;
 	ApeTaskType type;
 	ApeTaskStatus status;
 	char *name; /* Human-readable name */
@@ -583,39 +680,36 @@ struct ApeTask {
 	char *output; /* Output file */
 	ApeStrList inputs; /* Additional inputs (for link) */
 	ApeCmd cmd; /* Command to execute */
-	ApeTaskList deps; /* Tasks that must complete before this one */
+	ApeTaskDepList deps; /* Task handles that must complete before this one */
 	ApeProcHandle proc; /* Process handle when running */
 	int exit_code; /* Exit code after completion */
-	ApeBuilder *builder; /* Parent builder */
-};
+	ApeBuilderHandle builder; /* Parent builder handle */
+} ApeTask;
 
-ApeTask *ape_task_new(ApeBuilder *builder, ApeTaskType type, const char *name);
-void ape_task_free(ApeTask *task);
-void ape_task_set_input(ApeTask *task, const char *input);
-void ape_task_set_output(ApeTask *task, const char *output);
-void ape_task_add_input(ApeTask *task, const char *input);
-void ape_task_add_dep(ApeTask *task, ApeTask *dep);
-void ape_task_set_cmd(ApeTask *task, ApeCmd cmd);
-int ape_task_needs_rebuild(ApeTask *task);
-int ape_task_ready(ApeTask *task); /* All deps completed? */
+/* Task management */
+ApeTaskHandle ape_task_new(ApeBuilderHandle builder, ApeTaskType type, const char *name);
+void ape_task_free(ApeTaskHandle handle);
+ApeTask *ape_task_get(ApeTaskHandle handle);
+int ape_task_valid(ApeTaskHandle handle);
+
+/* Task configuration */
+void ape_task_set_input(ApeTaskHandle handle, const char *input);
+void ape_task_set_output(ApeTaskHandle handle, const char *output);
+void ape_task_add_input(ApeTaskHandle handle, const char *input);
+void ape_task_add_dep(ApeTaskHandle handle, ApeTaskHandle dep);
+void ape_task_set_cmd(ApeTaskHandle handle, ApeCmd cmd);
+int ape_task_needs_rebuild(ApeTaskHandle handle);
+int ape_task_ready(ApeTaskHandle handle); /* All deps completed? */
 
 /* ----------------------------------------------------------------------------
- * Builder - Build target with context and tasks
+ * Builder - Build target with sources, flags, and tasks
  * ---------------------------------------------------------------------------- */
 
-/* Builder dependency list */
 typedef struct {
-	size_t capacity;
-	size_t count;
-	ApeBuilder **items;
-} ApeBuilderList;
-
-struct ApeBuilder {
+	int in_use;
 	char *name; /* Target name */
 	ApeTargetType type;
-	ApeBuildCtx *ctx; /* Parent build context */
-	ApeToolchain *toolchain; /* Can override context's toolchain */
-	int owns_toolchain; /* Whether to free toolchain */
+	ApeToolchainHandle toolchain; /* Can override context's toolchain */
 
 	/* Source files */
 	ApeStrList sources;
@@ -635,120 +729,117 @@ struct ApeBuilder {
 	char *output_name; /* Override default output name */
 
 	/* Dependencies */
-	ApeBuilderList deps; /* Other builders to build first */
+	ApeBuilderDepList deps; /* Other builder handles to build first */
 
 	/* Tasks (generated during build) */
-	ApeTaskList tasks;
-	int next_task_id;
+	ApeTaskHandleList tasks;
 
 	/* State */
 	int built; /* Has been built this session */
 	int build_failed;
-};
+} ApeBuilder;
 
-ApeBuilder *ape_builder_new(ApeBuildCtx *ctx, const char *name);
-void ape_builder_free(ApeBuilder *builder);
-void ape_builder_set_type(ApeBuilder *builder, ApeTargetType type);
-void ape_builder_set_toolchain(ApeBuilder *builder, ApeToolchain *tc);
-void ape_builder_set_output_dir(ApeBuilder *builder, const char *dir);
-void ape_builder_set_output_name(ApeBuilder *builder, const char *name);
+/* Builder management */
+ApeBuilderHandle ape_builder_new(const char *name);
+void ape_builder_free(ApeBuilderHandle handle);
+ApeBuilder *ape_builder_get(ApeBuilderHandle handle);
+int ape_builder_valid(ApeBuilderHandle handle);
+
+/* Builder configuration */
+void ape_builder_set_type(ApeBuilderHandle handle, ApeTargetType type);
+void ape_builder_set_toolchain(ApeBuilderHandle handle, ApeToolchainHandle tc);
+void ape_builder_set_output_dir(ApeBuilderHandle handle, const char *dir);
+void ape_builder_set_output_name(ApeBuilderHandle handle, const char *name);
 
 /* Source management */
-void ape_builder_add_source(ApeBuilder *builder, const char *path);
-void ape_builder_add_sources(ApeBuilder *builder, const char **paths, size_t count);
-void ape_builder_add_source_dir(ApeBuilder *builder, const char *dir);
-void ape_builder_add_source_dir_r(ApeBuilder *builder, const char *dir);
-void ape_builder_add_source_glob(ApeBuilder *builder, const char *pattern);
+void ape_builder_add_source(ApeBuilderHandle handle, const char *path);
+void ape_builder_add_sources(ApeBuilderHandle handle, const char **paths, size_t count);
+void ape_builder_add_source_dir(ApeBuilderHandle handle, const char *dir);
+void ape_builder_add_source_dir_r(ApeBuilderHandle handle, const char *dir);
+void ape_builder_add_source_glob(ApeBuilderHandle handle, const char *pattern);
 
 /* Compiler flags */
-void ape_builder_add_cflag(ApeBuilder *builder, const char *flag);
-void ape_builder_add_include(ApeBuilder *builder, const char *dir);
-void ape_builder_add_define(ApeBuilder *builder, const char *define);
-void ape_builder_add_define_value(ApeBuilder *builder, const char *name, const char *value);
+void ape_builder_add_cflag(ApeBuilderHandle handle, const char *flag);
+void ape_builder_add_include(ApeBuilderHandle handle, const char *dir);
+void ape_builder_add_define(ApeBuilderHandle handle, const char *define);
+void ape_builder_add_define_value(ApeBuilderHandle handle, const char *name, const char *value);
 
 /* Linker flags */
-void ape_builder_add_ldflag(ApeBuilder *builder, const char *flag);
-void ape_builder_add_lib_dir(ApeBuilder *builder, const char *dir);
-void ape_builder_add_lib(ApeBuilder *builder, const char *lib);
+void ape_builder_add_ldflag(ApeBuilderHandle handle, const char *flag);
+void ape_builder_add_lib_dir(ApeBuilderHandle handle, const char *dir);
+void ape_builder_add_lib(ApeBuilderHandle handle, const char *lib);
 
 /* Dependencies */
-void ape_builder_depends_on(ApeBuilder *builder, ApeBuilder *dep);
-void ape_builder_link_with(ApeBuilder *builder, ApeBuilder *lib_builder);
+void ape_builder_depends_on(ApeBuilderHandle handle, ApeBuilderHandle dep);
+void ape_builder_link_with(ApeBuilderHandle handle, ApeBuilderHandle lib_builder);
 
 /* Build operations */
-int ape_builder_build(ApeBuilder *builder);
-int ape_builder_clean(ApeBuilder *builder);
-int ape_builder_rebuild(ApeBuilder *builder);
-char *ape_builder_output_path(ApeBuilder *builder);
+int ape_builder_build(ApeBuilderHandle handle);
+int ape_builder_clean(ApeBuilderHandle handle);
+int ape_builder_rebuild(ApeBuilderHandle handle);
+char *ape_builder_output_path(ApeBuilderHandle handle);
 
 /* Task generation (internal, but exposed for flexibility) */
-ApeTask *ape_builder_add_compile_task(ApeBuilder *builder, const char *source);
-ApeTask *ape_builder_add_link_task(ApeBuilder *builder);
-ApeTask *ape_builder_add_archive_task(ApeBuilder *builder);
-ApeTask *ape_builder_add_command_task(ApeBuilder *builder, const char *name, ApeCmd cmd);
-void ape_builder_generate_tasks(ApeBuilder *builder);
+ApeTaskHandle ape_builder_add_compile_task(ApeBuilderHandle handle, const char *source);
+ApeTaskHandle ape_builder_add_link_task(ApeBuilderHandle handle);
+ApeTaskHandle ape_builder_add_archive_task(ApeBuilderHandle handle);
+ApeTaskHandle ape_builder_add_command_task(ApeBuilderHandle handle, const char *name, ApeCmd cmd);
+void ape_builder_generate_tasks(ApeBuilderHandle handle);
 
 /* ----------------------------------------------------------------------------
- * Build Context - Global configuration and builder registry
+ * Build Context - Global configuration
+ *
+ * The build context is now a simple configuration struct. Builders and
+ * toolchains are stored in global arrays, not inside the context.
  * ---------------------------------------------------------------------------- */
 
-struct ApeBuildCtx {
-	ApeToolchain *toolchain; /* Default toolchain */
-	int owns_toolchain;
+typedef struct {
+	ApeToolchainHandle toolchain; /* Default toolchain */
 	char *output_dir; /* Default output directory */
 	int parallel_jobs; /* Max parallel tasks (0 = auto) */
 	ApeVerbosity verbosity;
 	int force_rebuild; /* Ignore timestamps */
 	int dry_run; /* Don't actually run commands */
 	int keep_going; /* Continue on errors */
+} ApeBuildCtx;
 
-	ApeBuilderList builders; /* Registered builders */
-};
-
-ApeBuildCtx *ape_ctx_new(void);
-void ape_ctx_free(ApeBuildCtx *ctx);
-void ape_ctx_set_toolchain(ApeBuildCtx *ctx, ApeToolchain *tc);
+/* Global context - there's one active context at a time */
+void ape_ctx_init(ApeBuildCtx *ctx);
+void ape_ctx_cleanup(ApeBuildCtx *ctx);
+void ape_ctx_set_toolchain(ApeBuildCtx *ctx, ApeToolchainHandle tc);
 void ape_ctx_set_output_dir(ApeBuildCtx *ctx, const char *dir);
 void ape_ctx_set_parallel(ApeBuildCtx *ctx, int jobs);
 void ape_ctx_set_verbosity(ApeBuildCtx *ctx, ApeVerbosity level);
 void ape_ctx_set_force_rebuild(ApeBuildCtx *ctx, int force);
 void ape_ctx_set_dry_run(ApeBuildCtx *ctx, int dry_run);
 void ape_ctx_set_keep_going(ApeBuildCtx *ctx, int keep_going);
-ApeToolchain *ape_ctx_get_toolchain(ApeBuildCtx *ctx);
+ApeToolchainHandle ape_ctx_get_toolchain(ApeBuildCtx *ctx);
 
-/* Builder registration */
-void ape_ctx_add_builder(ApeBuildCtx *ctx, ApeBuilder *builder);
-ApeBuilder *ape_ctx_get_builder(ApeBuildCtx *ctx, const char *name);
-
-/* Build operations */
-int ape_ctx_build(ApeBuildCtx *ctx, const char *target);
-int ape_ctx_build_all(ApeBuildCtx *ctx);
-int ape_ctx_clean(ApeBuildCtx *ctx, const char *target);
-int ape_ctx_clean_all(ApeBuildCtx *ctx);
-int ape_ctx_rebuild(ApeBuildCtx *ctx, const char *target);
-int ape_ctx_rebuild_all(ApeBuildCtx *ctx);
+/* Build operations using context */
+int ape_ctx_build(ApeBuildCtx *ctx, ApeBuilderHandle builder);
+int ape_ctx_clean(ApeBuildCtx *ctx, ApeBuilderHandle builder);
+int ape_ctx_rebuild(ApeBuildCtx *ctx, ApeBuilderHandle builder);
 
 /* ----------------------------------------------------------------------------
- * Task Scheduler - Parallel task execution with dependency resolution
+ * Global Storage Management
+ *
+ * Functions to manage the global storage arrays. Call ape_build_init() at
+ * program start and ape_build_shutdown() at program end.
  * ---------------------------------------------------------------------------- */
 
-typedef struct ApeScheduler ApeScheduler;
+void ape_build_init(void);
+void ape_build_shutdown(void);
+void ape_build_reset(void); /* Free all objects and reset storage */
 
-ApeScheduler *ape_scheduler_new(ApeBuildCtx *ctx);
-void ape_scheduler_free(ApeScheduler *sched);
-void ape_scheduler_add_task(ApeScheduler *sched, ApeTask *task);
-void ape_scheduler_add_tasks(ApeScheduler *sched, ApeTaskList *tasks);
-int ape_scheduler_run(ApeScheduler *sched);
-int ape_scheduler_get_completed(ApeScheduler *sched);
-int ape_scheduler_get_failed(ApeScheduler *sched);
-int ape_scheduler_get_skipped(ApeScheduler *sched);
+/* Find builder by name */
+ApeBuilderHandle ape_builder_find(const char *name);
 
 /* ----------------------------------------------------------------------------
  * Utility functions
  * ---------------------------------------------------------------------------- */
 
-char *ape_build_obj_path(ApeBuildCtx *ctx, ApeBuilder *builder, const char *source);
-char *ape_build_output_path(ApeBuildCtx *ctx, ApeBuilder *builder);
+char *ape_build_obj_path(ApeBuildCtx *ctx, ApeBuilderHandle builder, const char *source);
+char *ape_build_output_path(ApeBuildCtx *ctx, ApeBuilderHandle builder);
 int ape_build_get_cpu_count(void);
 
 /* ----------------------------------------------------------------------------

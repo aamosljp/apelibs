@@ -374,8 +374,13 @@ ape_line_error ape_line_last_error(void);
 
 #include <string.h>
 #include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+#include "ape_line_api.h"
+#include <fcntl.h>
+#include <errno.h>
 
-#include "ape_line_internal.h"
+/* BEGIN ape_line_editor.c */
 
 APE_LINE_DEF void ape_line_editor_reset(ape_line_editor *e)
 {
@@ -468,9 +473,9 @@ APE_LINE_DEF int ape_line_editor_set_str(ape_line_editor *e, char *s, size_t len
 	e->last_char = e->buf_items[e->buf_len - 1];
 	return 0;
 }
-#include "ape_line_internal.h"
-#include <errno.h>
-#include <string.h>
+/* END ape_line_editor.c */
+
+/* BEGIN ape_line_error.c */
 
 ape_line_error _ape_line_last_error = APE_LINE_ERROR_NONE;
 
@@ -505,12 +510,9 @@ APE_LINE_DEF ape_line_error ape_line_last_error()
 {
 	return _ape_line_last_error;
 }
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
+/* END ape_line_error.c */
 
-#include "ape_line_internal.h"
+/* BEGIN ape_line_history.c */
 
 static ape_line_history _ape_line_history_ = { 0 };
 
@@ -536,7 +538,7 @@ APE_LINE_PRIVATE int ape_line_save_histfile()
 		return -1;
 	if (_ape_line_history_.histfile_writer) {
 		char *buf;
-		size_t rn = _ape_line_history_.histfile_writer(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYbuf);
+		size_t rn = _ape_line_history_.histfile_writer(&buf);
 		size_t wn = write(_ape_line_history_.histfile_fd, buf, rn);
 		if (wn <= 0) {
 			perror("Write histfile: ");
@@ -662,15 +664,9 @@ APE_LINE_DEF int ape_line_history_set_dirty()
 	_ape_line_history_.current_item = -1;
 	return 0;
 }
-#include "ape_line_api.h"
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <string.h>
-#include <signal.h>
+/* END ape_line_history.c */
 
-#include "ape_line_internal.h"
+/* BEGIN ape_line_main.c */
 
 static ape_line_state _ape_line_state_g = { 0 };
 
@@ -678,14 +674,14 @@ APE_LINE_PRIVATE void ape_line_apply_raw(void)
 {
 	if (!_ape_line_state_g.s_is_tty)
 		return;
-	tcsetattr(_ape_line_state_g.s_in_fd, TCSAFLUSH, #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_raw_in);
+	tcsetattr(_ape_line_state_g.s_in_fd, TCSAFLUSH, &_ape_line_state_g.s_raw_in);
 }
 
 APE_LINE_PRIVATE void ape_line_restore(void)
 {
 	if (!_ape_line_state_g.s_is_tty)
 		return;
-	tcsetattr(_ape_line_state_g.s_in_fd, TCSAFLUSH, #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_saved_in);
+	tcsetattr(_ape_line_state_g.s_in_fd, TCSAFLUSH, &_ape_line_state_g.s_saved_in);
 }
 
 APE_LINE_PRIVATE void ape_line_at_exit(void)
@@ -707,7 +703,7 @@ APE_LINE_PRIVATE void ape_line_signal_handler(int sig)
 			ape_line_apply_raw();
 		break;
 	case SIGINT:
-		ape_line_editor_reset(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor);
+		ape_line_editor_reset(&_ape_line_state_g.s_editor);
 		ape_line_puts("^C\n");
 		ape_line_redraw();
 	default:
@@ -718,19 +714,17 @@ APE_LINE_PRIVATE void ape_line_signal_handler(int sig)
 APE_LINE_PRIVATE void ape_line_install_handlers()
 {
 	struct sigaction sa;
-	memset(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYsa, 0, sizeof(sa));
+	memset(&sa, 0, sizeof(sa));
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = ape_line_signal_handler;
-	sigaction(SIGTSTP, #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYsa, NULL);
-	sigaction(SIGCONT, #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYsa, NULL);
-	sigaction(SIGINT, #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYsa, NULL);
+	sigaction(SIGTSTP, &sa, NULL);
+	sigaction(SIGCONT, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
 }
 
 APE_LINE_PRIVATE int ape_line_def_is_done()
 {
-	int result = _ape_line_state_g.s_is_done == APE_LINE_TRUE ||
-				     ape_line_editor_last_char(
-					     #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor) == '\n' ?
+	int result = _ape_line_state_g.s_is_done == APE_LINE_TRUE || ape_line_editor_last_char(&_ape_line_state_g.s_editor) == '\n' ?
 			     APE_LINE_TRUE :
 			     APE_LINE_FALSE;
 	if (result == APE_LINE_TRUE)
@@ -762,9 +756,7 @@ APE_LINE_PRIVATE int ape_line_def_char_handler(char c)
 				{
 					ape_line_history_entry *ent = ape_line_history_previous();
 					if (ent) {
-						ape_line_editor_set_str(
-							#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor,
-							ent->data, ent->data_len);
+						ape_line_editor_set_str(&_ape_line_state_g.s_editor, ent->data, ent->data_len);
 					}
 					ape_line_redraw();
 				} break;
@@ -772,18 +764,15 @@ APE_LINE_PRIVATE int ape_line_def_char_handler(char c)
 				{
 					ape_line_history_entry *ent = ape_line_history_next();
 					if (ent) {
-						ape_line_editor_set_str(
-							#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor,
-							ent->data, ent->data_len);
+						ape_line_editor_set_str(&_ape_line_state_g.s_editor, ent->data, ent->data_len);
 					}
 					ape_line_redraw();
 				} break;
 				case 'C': /* right */
-					ape_line_editor_move(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor, 1);
+					ape_line_editor_move(&_ape_line_state_g.s_editor, 1);
 					break;
 				case 'D': /* left */
-					ape_line_editor_move(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor,
-							     -1);
+					ape_line_editor_move(&_ape_line_state_g.s_editor, -1);
 					break;
 				}
 			}
@@ -792,7 +781,7 @@ APE_LINE_PRIVATE int ape_line_def_char_handler(char c)
 		return APE_LINE_TRUE;
 	}
 	if (c == '\r' || c == '\n') {
-		ape_line_editor_command(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor, '\n');
+		ape_line_editor_command(&_ape_line_state_g.s_editor, '\n');
 		_ape_line_state_g.s_is_done = APE_LINE_TRUE;
 		(void)!ape_line_puts("\r\n");
 		return APE_LINE_TRUE;
@@ -805,13 +794,13 @@ APE_LINE_PRIVATE int ape_line_def_char_handler(char c)
 	}
 	ape_line_history_set_dirty();
 	if (c == 0x7f || c == 0x08) {
-		ape_line_editor_command(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor, '\b');
+		ape_line_editor_command(&_ape_line_state_g.s_editor, '\b');
 		(void)!ape_line_puts("\b \b");
 		return APE_LINE_TRUE;
 	}
 	if (c >= 0x20 || c == '\t') {
-		ape_line_editor_command(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor, c);
-		(void)!ape_line_puts(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYc);
+		ape_line_editor_command(&_ape_line_state_g.s_editor, c);
+		(void)!ape_line_puts(&c);
 		return APE_LINE_TRUE;
 	}
 	return APE_LINE_FALSE;
@@ -827,19 +816,16 @@ APE_LINE_DEF int ape_line_init(const ape_line_opts *opts)
 	_ape_line_state_g.s_opts.char_handler_func = opts->char_handler_func ? opts->char_handler_func : ape_line_def_char_handler;
 	_ape_line_state_g.s_in_fd = STDIN_FILENO;
 	_ape_line_state_g.s_out_fd = STDOUT_FILENO;
-	_ape_line_state_g.s_is_tty = isatty(
-		_ape_line_state_g.s_in_fd) #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY
-		isatty(_ape_line_state_g.s_out_fd);
+	_ape_line_state_g.s_is_tty = isatty(_ape_line_state_g.s_in_fd) && isatty(_ape_line_state_g.s_out_fd);
 	if (_ape_line_state_g.s_is_tty) {
-		if (tcgetattr(_ape_line_state_g.s_in_fd, #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_saved_in) < 0)
+		if (tcgetattr(_ape_line_state_g.s_in_fd, &_ape_line_state_g.s_saved_in) < 0)
 			return -1;
 		_ape_line_state_g.s_raw_in = _ape_line_state_g.s_saved_in;
 
-		_ape_line_state_g.s_raw_in.c_iflag #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY =
-			~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-		_ape_line_state_g.s_raw_in.c_oflag #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY = ~(OPOST);
+		_ape_line_state_g.s_raw_in.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+		_ape_line_state_g.s_raw_in.c_oflag &= ~(OPOST);
 		_ape_line_state_g.s_raw_in.c_cflag |= (CS8);
-		_ape_line_state_g.s_raw_in.c_lflag #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY = ~(ECHO | ICANON | IEXTEN | ISIG);
+		_ape_line_state_g.s_raw_in.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
 		if (_ape_line_state_g.s_opts.raw_mode_cbreak)
 			_ape_line_state_g.s_raw_in.c_lflag |= ISIG;
 		_ape_line_state_g.s_raw_in.c_cc[VMIN] = 1;
@@ -947,28 +933,28 @@ APE_LINE_DEF ssize_t ape_line_read(const char *prompt, char **out_line)
 		return -1;
 	}
 
-	ape_line_editor_reset(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor);
+	ape_line_editor_reset(&_ape_line_state_g.s_editor);
 	for (;;) {
 		ape_line_redraw();
 		unsigned char ch;
-		ssize_t r = read(_ape_line_state_g.s_in_fd, #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFYch, 1);
+		ssize_t r = read(_ape_line_state_g.s_in_fd, &ch, 1);
 		if (r < 0) {
 			if (errno == EINTR) { // Ctrl-C in cbreak OR signals
 				// Emit newline to keep shell tidy, surface EINTR
 				ape_line_puts("^C\r\n");
-				ape_line_editor_reset(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor);
+				ape_line_editor_reset(&_ape_line_state_g.s_editor);
 				_ape_line_state_g.s_depth--;
 				ape_line_set_error(APE_LINE_ERROR_INTERRUPT);
 				errno = EINTR;
 				return -1;
 			}
-			ape_line_editor_reset(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor);
+			ape_line_editor_reset(&_ape_line_state_g.s_editor);
 			_ape_line_state_g.s_depth--;
 			ape_line_set_error(APE_LINE_ERROR_READ);
 			return -1;
 		}
 		if (r == 0) { // EOF
-			ape_line_editor_reset(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor);
+			ape_line_editor_reset(&_ape_line_state_g.s_editor);
 			_ape_line_state_g.s_depth--;
 			return 0;
 		}
@@ -978,21 +964,18 @@ APE_LINE_DEF ssize_t ape_line_read(const char *prompt, char **out_line)
 		}
 
 		if (_ape_line_state_g.s_opts.is_done_func()) {
-			if (_ape_line_state_g.s_editor.buf_len >
-				    0 #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY #define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY
-					    _ape_line_state_g.s_editor.buf_items[_ape_line_state_g.s_editor.buf_len - 1] ==
-			    '\n') {
+			if (_ape_line_state_g.s_editor.buf_len > 0 &&
+			    _ape_line_state_g.s_editor.buf_items[_ape_line_state_g.s_editor.buf_len - 1] == '\n') {
 				ssize_t old_cursor = _ape_line_state_g.s_editor.cursor;
-				ape_line_editor_goto(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor,
-						     _ape_line_state_g.s_editor.buf_len);
-				// ape_line_editor_enter_mode(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor, APE_LINE_EDITOR_MODE_INSERT);
-				ape_line_editor_command(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor, '\b');
+				ape_line_editor_goto(&_ape_line_state_g.s_editor, _ape_line_state_g.s_editor.buf_len);
+				// ape_line_editor_enter_mode(&_ape_line_state_g.s_editor, APE_LINE_EDITOR_MODE_INSERT);
+				ape_line_editor_command(&_ape_line_state_g.s_editor, '\b');
 			}
 
 			if (out_line) {
 				*out_line = (char *)APE_LINE_MALLOC(_ape_line_state_g.s_editor.buf_len + 1);
 				if (!*out_line) {
-					ape_line_editor_reset(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor);
+					ape_line_editor_reset(&_ape_line_state_g.s_editor);
 					ape_line_set_error(APE_LINE_ERROR_NO_OUTLINE);
 					return -1;
 				}
@@ -1003,22 +986,11 @@ APE_LINE_DEF ssize_t ape_line_read(const char *prompt, char **out_line)
 			(void)_ape_line_state_g.s_opts.exec_cmd_func(*out_line);
 
 			ssize_t ret_len = (ssize_t)_ape_line_state_g.s_editor.buf_len;
-			ape_line_editor_reset(#define REPLACED_WITH_PRIVATE_CODE_DO_NOT_MODIFY_ape_line_state_g.s_editor);
+			ape_line_editor_reset(&_ape_line_state_g.s_editor);
 			return ret_len;
 		}
 	}
 }
-
-/* BEGIN ape_line_editor.c */
-/* END ape_line_editor.c */
-
-/* BEGIN ape_line_error.c */
-/* END ape_line_error.c */
-
-/* BEGIN ape_line_history.c */
-/* END ape_line_history.c */
-
-/* BEGIN ape_line_main.c */
 /* END ape_line_main.c */
 
 #endif
