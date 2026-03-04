@@ -249,13 +249,13 @@ typedef int (*ape_line_exec_cmd_fn)(char *cmd);
 typedef int (*ape_line_char_handler_fn)(char c);
 
 typedef struct {
-	int raw_mode_cbreak; // 0=raw (full), 1=cbreak (keeps ISIG etc.)
-	int enable_vt; // win: enable VT sequences
+	int raw_mode_cbreak;  // 0=raw (full), 1=cbreak (keeps ISIG etc.)
+	int enable_vt;	      // win: enable VT sequences
 	int install_handlers; // restore on SIGTSTP/SIGCONT (posix)
 
 	// Optional hooks (set to NULL or leave undefined to use defaults)
-	ape_line_is_done_fn is_done_func; // Return nonzero when a command is complete
-	ape_line_exec_cmd_fn exec_cmd_func; // Called when is_done_func() returns true
+	ape_line_is_done_fn is_done_func;	    // Return nonzero when a command is complete
+	ape_line_exec_cmd_fn exec_cmd_func;	    // Called when is_done_func() returns true
 	ape_line_char_handler_fn char_handler_func; // Return nonzero if you handled c
 } ape_line_opts;
 

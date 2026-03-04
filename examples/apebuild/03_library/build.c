@@ -25,8 +25,7 @@
 #endif
 #include "apebuild.h"
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	APE_REBUILD(argc, argv);
 
 	ape_log_init();

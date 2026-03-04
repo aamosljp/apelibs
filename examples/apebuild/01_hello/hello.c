@@ -4,8 +4,7 @@
 
 #include <stdio.h>
 
-int main(void)
-{
+int main(void) {
 	printf("Hello from apebuild!\n");
 	return 0;
 }

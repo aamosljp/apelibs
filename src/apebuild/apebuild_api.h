@@ -92,14 +92,11 @@ extern "C" {
 #define ape_da_append_many(da, new_items, n)                                                                \
 	do {                                                                                                \
 		if ((da)->count + (n) > (da)->capacity) {                                                   \
-			if ((da)->capacity == 0)                                                            \
-				(da)->capacity = APEBUILD_INIT_CAP;                                         \
-			while ((da)->count + (n) > (da)->capacity)                                          \
-				(da)->capacity *= 2;                                                        \
+			if ((da)->capacity == 0) (da)->capacity = APEBUILD_INIT_CAP;                        \
+			while ((da)->count + (n) > (da)->capacity) (da)->capacity *= 2;                     \
 			(da)->items = APEBUILD_REALLOC((da)->items, (da)->capacity * sizeof(*(da)->items)); \
 		}                                                                                           \
-		for (size_t _i = 0; _i < (n); _i++)                                                         \
-			(da)->items[(da)->count++] = (new_items)[_i];                                       \
+		for (size_t _i = 0; _i < (n); _i++) (da)->items[(da)->count++] = (new_items)[_i];           \
 	} while (0)
 
 #define ape_da_prepend(da, item)                                                                            \
@@ -108,8 +105,7 @@ extern "C" {
 			(da)->capacity = (da)->capacity == 0 ? APEBUILD_INIT_CAP : (da)->capacity * 2;      \
 			(da)->items = APEBUILD_REALLOC((da)->items, (da)->capacity * sizeof(*(da)->items)); \
 		}                                                                                           \
-		for (size_t _i = (da)->count; _i > 0; _i--)                                                 \
-			(da)->items[_i] = (da)->items[_i - 1];                                              \
+		for (size_t _i = (da)->count; _i > 0; _i--) (da)->items[_i] = (da)->items[_i - 1];          \
 		(da)->items[0] = (item);                                                                    \
 		(da)->count++;                                                                              \
 	} while (0)
@@ -120,17 +116,15 @@ extern "C" {
 			(da)->capacity = (da)->capacity == 0 ? APEBUILD_INIT_CAP : (da)->capacity * 2;      \
 			(da)->items = APEBUILD_REALLOC((da)->items, (da)->capacity * sizeof(*(da)->items)); \
 		}                                                                                           \
-		for (size_t _i = (da)->count; _i > (index); _i--)                                           \
-			(da)->items[_i] = (da)->items[_i - 1];                                              \
+		for (size_t _i = (da)->count; _i > (index); _i--) (da)->items[_i] = (da)->items[_i - 1];    \
 		(da)->items[index] = (item);                                                                \
 		(da)->count++;                                                                              \
 	} while (0)
 
-#define ape_da_remove(da, index)                                      \
-	do {                                                          \
-		for (size_t _i = (index); _i < (da)->count - 1; _i++) \
-			(da)->items[_i] = (da)->items[_i + 1];        \
-		(da)->count--;                                        \
+#define ape_da_remove(da, index)                                                                             \
+	do {                                                                                                 \
+		for (size_t _i = (index); _i < (da)->count - 1; _i++) (da)->items[_i] = (da)->items[_i + 1]; \
+		(da)->count--;                                                                               \
 	} while (0)
 
 #define ape_da_pop(da) ((da)->items[--(da)->count])
@@ -488,49 +482,6 @@ void ape_cmdlist_free(ApeCmdList *list);
 	} while (0)
 
 /* ============================================================================
- * Download Module (ape_dl)
- * ============================================================================ */
-
-typedef struct {
-	const char *domain;
-	const char *path;
-} ApeUrl;
-
-#define APE_URL(d, p) ((ApeUrl){ .domain = d, .path = p })
-
-typedef enum {
-	APE_DL_OK,
-	APE_DL_ERR_NETWORK,
-	APE_DL_ERR_DNS,
-	APE_DL_ERR_TIMEOUT,
-	APE_DL_ERR_HTTP,
-	APE_DL_ERR_SSL,
-	APE_DL_ERR_WRITE
-} ApeDownloadError;
-
-typedef struct {
-	int timeout;
-	int follow_redirects;
-	int max_redirects;
-	int verify_ssl;
-	char *user_agent;
-	ApeStrList headers;
-} ApeDownloadOptions;
-
-ApeDownloadOptions ape_dl_options_default(void);
-
-typedef struct {
-	size_t total_bytes;
-	size_t downloaded_bytes;
-	double speed;
-} ApeDownloadProgress;
-
-typedef void (*ApeDownloadCallback)(ApeDownloadProgress *progress, void *userdata);
-
-int ape_dl_fetch(const ApeUrl url, const char *output, size_t size, ApeDownloadOptions *options);
-int ape_dl_fetch_progress(const char *url, const char *output, ApeDownloadOptions *options, ApeDownloadCallback callback, void *userdata);
-
-/* ============================================================================
  * Core Build Module (ape_build)
  * ============================================================================ */
 
@@ -597,10 +548,10 @@ typedef struct {
 
 /* Verbosity levels */
 typedef enum {
-	APE_VERBOSE_QUIET, /* No output except errors */
-	APE_VERBOSE_NORMAL, /* Normal build output */
+	APE_VERBOSE_QUIET,   /* No output except errors */
+	APE_VERBOSE_NORMAL,  /* Normal build output */
 	APE_VERBOSE_VERBOSE, /* Show commands being run */
-	APE_VERBOSE_DEBUG /* Show all details */
+	APE_VERBOSE_DEBUG    /* Show all details */
 } ApeVerbosity;
 
 /* Build target types */
@@ -608,17 +559,18 @@ typedef enum {
 	APE_TARGET_EXECUTABLE,
 	APE_TARGET_STATIC_LIB,
 	APE_TARGET_SHARED_LIB,
-	APE_TARGET_OBJECT /* Compile only, no link */
+	APE_TARGET_OBJECT, /* Compile only, no link */
+	APE_TARGET_WASM	   /* Emscripten WebAssembly output (.html or .js) */
 } ApeTargetType;
 
 /* Task types */
 typedef enum {
 	APE_TASK_TYPE_COMPILE, /* Compile source to object */
-	APE_TASK_TYPE_LINK, /* Link objects to target */
+	APE_TASK_TYPE_LINK,    /* Link objects to target */
 	APE_TASK_TYPE_ARCHIVE, /* Create static library */
 	APE_TASK_TYPE_COMMAND, /* Run arbitrary command */
-	APE_TASK_TYPE_COPY, /* Copy file */
-	APE_TASK_TYPE_MKDIR /* Create directory */
+	APE_TASK_TYPE_COPY,    /* Copy file */
+	APE_TASK_TYPE_MKDIR    /* Create directory */
 } ApeTaskType;
 
 /* Task status */
@@ -636,16 +588,16 @@ typedef enum {
 
 typedef struct {
 	int in_use;
-	char *name; /* Toolchain name (e.g., "gcc", "clang") */
-	char *cc; /* C compiler command */
-	char *cxx; /* C++ compiler command */
-	char *ld; /* Linker command */
-	char *ar; /* Archiver command */
-	char *obj_ext; /* Object file extension (e.g., ".o") */
-	char *exe_ext; /* Executable extension (e.g., "", ".exe") */
+	char *name;	      /* Toolchain name (e.g., "gcc", "clang") */
+	char *cc;	      /* C compiler command */
+	char *cxx;	      /* C++ compiler command */
+	char *ld;	      /* Linker command */
+	char *ar;	      /* Archiver command */
+	char *obj_ext;	      /* Object file extension (e.g., ".o") */
+	char *exe_ext;	      /* Executable extension (e.g., "", ".exe") */
 	char *static_lib_ext; /* Static lib extension (e.g., ".a") */
 	char *shared_lib_ext; /* Shared lib extension (e.g., ".so") */
-	char *lib_prefix; /* Library prefix (e.g., "lib") */
+	char *lib_prefix;     /* Library prefix (e.g., "lib") */
 	ApeStrList default_cflags;
 	ApeStrList default_ldflags;
 } ApeToolchain;
@@ -656,6 +608,7 @@ void ape_toolchain_free(ApeToolchainHandle handle);
 ApeToolchainHandle ape_toolchain_clone(ApeToolchainHandle handle);
 ApeToolchainHandle ape_toolchain_gcc(void);
 ApeToolchainHandle ape_toolchain_clang(void);
+ApeToolchainHandle ape_toolchain_emcc(void);
 ApeToolchain *ape_toolchain_get(ApeToolchainHandle handle);
 int ape_toolchain_valid(ApeToolchainHandle handle);
 
@@ -675,14 +628,14 @@ typedef struct {
 	int in_use;
 	ApeTaskType type;
 	ApeTaskStatus status;
-	char *name; /* Human-readable name */
-	char *input; /* Primary input file (for compile) */
-	char *output; /* Output file */
-	ApeStrList inputs; /* Additional inputs (for link) */
-	ApeCmd cmd; /* Command to execute */
-	ApeTaskDepList deps; /* Task handles that must complete before this one */
-	ApeProcHandle proc; /* Process handle when running */
-	int exit_code; /* Exit code after completion */
+	char *name;		  /* Human-readable name */
+	char *input;		  /* Primary input file (for compile) */
+	char *output;		  /* Output file */
+	ApeStrList inputs;	  /* Additional inputs (for link) */
+	ApeCmd cmd;		  /* Command to execute */
+	ApeTaskDepList deps;	  /* Task handles that must complete before this one */
+	ApeProcHandle proc;	  /* Process handle when running */
+	int exit_code;		  /* Exit code after completion */
 	ApeBuilderHandle builder; /* Parent builder handle */
 } ApeTask;
 
@@ -727,6 +680,15 @@ typedef struct {
 	/* Output configuration */
 	char *output_dir;
 	char *output_name; /* Override default output name */
+
+	/* Emscripten/WASM configuration */
+	char *shell_file;	       /* Path to custom shell HTML file (NULL = use default) */
+	int wasm_html_output;	       /* 1 = .html output (default), 0 = .js only */
+	ApeStrList exported_functions; /* Functions to export (e.g., "_main") */
+	ApeStrList preload_files;      /* Files to preload with --preload-file */
+	ApeStrList embed_files;	       /* Files to embed with --embed-file */
+	int wasm_initial_memory;       /* Initial memory in MB (0 = emcc default) */
+	int wasm_max_memory;	       /* Max memory in MB (0 = emcc default) */
 
 	/* Dependencies */
 	ApeBuilderDepList deps; /* Other builder handles to build first */
@@ -779,6 +741,17 @@ int ape_builder_clean(ApeBuilderHandle handle);
 int ape_builder_rebuild(ApeBuilderHandle handle);
 char *ape_builder_output_path(ApeBuilderHandle handle);
 
+/* Emscripten/WASM-specific builder configuration */
+void ape_builder_set_shell_file(ApeBuilderHandle handle, const char *path);
+void ape_builder_set_wasm_output_mode(ApeBuilderHandle handle, int html);
+void ape_builder_add_exported_function(ApeBuilderHandle handle, const char *func);
+void ape_builder_add_preload_file(ApeBuilderHandle handle, const char *path);
+void ape_builder_add_embed_file(ApeBuilderHandle handle, const char *path);
+void ape_builder_set_wasm_memory(ApeBuilderHandle handle, int initial_mb, int max_mb);
+
+/* Get default Emscripten shell HTML (embedded in source, returned as static string) */
+const char *ape_emcc_default_shell(void);
+
 /* Task generation (internal, but exposed for flexibility) */
 ApeTaskHandle ape_builder_add_compile_task(ApeBuilderHandle handle, const char *source);
 ApeTaskHandle ape_builder_add_link_task(ApeBuilderHandle handle);
@@ -795,12 +768,12 @@ void ape_builder_generate_tasks(ApeBuilderHandle handle);
 
 typedef struct {
 	ApeToolchainHandle toolchain; /* Default toolchain */
-	char *output_dir; /* Default output directory */
-	int parallel_jobs; /* Max parallel tasks (0 = auto) */
+	char *output_dir;	      /* Default output directory */
+	int parallel_jobs;	      /* Max parallel tasks (0 = auto) */
 	ApeVerbosity verbosity;
 	int force_rebuild; /* Ignore timestamps */
-	int dry_run; /* Don't actually run commands */
-	int keep_going; /* Continue on errors */
+	int dry_run;	   /* Don't actually run commands */
+	int keep_going;	   /* Continue on errors */
 } ApeBuildCtx;
 
 /* Global context - there's one active context at a time */
@@ -849,11 +822,9 @@ int ape_build_get_cpu_count(void);
 int ape_self_needs_rebuild(const char *binary, const char *source);
 int ape_self_rebuild(int argc, char **argv, const char *source);
 
-#define APE_REBUILD(argc, argv)                                            \
-	do {                                                               \
-		if (ape_self_needs_rebuild((argv)[0], __FILE__)) {         \
-			return ape_self_rebuild((argc), (argv), __FILE__); \
-		}                                                          \
+#define APE_REBUILD(argc, argv)                                                                                         \
+	do {                                                                                                            \
+		if (ape_self_needs_rebuild((argv)[0], __FILE__)) { return ape_self_rebuild((argc), (argv), __FILE__); } \
 	} while (0)
 
 #if defined(__cplusplus)

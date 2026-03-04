@@ -1,2 +1,5 @@
 **.o
 bin/
+compile_commands.json
+.direnv/
+.cache/

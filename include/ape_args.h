@@ -1,4 +1,31 @@
 /*
+ * This is free and unencumbered software released into the public domain.
+ * 
+ * Anyone is free to copy, modify, publish, use, compile, sell, or
+ * distribute this software, either in source code form or as a compiled
+ * binary, for any purpose, commercial or non-commercial, and by any
+ * means.
+ * 
+ * In jurisdictions that recognize copyright laws, the author or authors
+ * of this software dedicate any and all copyright interest in the
+ * software to the public domain. We make this dedication for the benefit
+ * of the public at large and to the detriment of our heirs and
+ * successors. We intend this dedication to be an overt act of
+ * relinquishment in perpetuity of all present and future rights to this
+ * software under copyright law.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ * For more information, please refer to <https://unlicense.org>
+ */
+
+/*
  * ape_args.h - APE Argument Parsing Library
  * -----------------------------------
  * Author: aamosljp (https://github.com/aamosljp)
@@ -125,33 +152,31 @@ extern "C" {
 		} array[APE_ARGS_HASHMAP_MAX_LEN];    \
 	}
 
-#define APE_ARGS_HASHMAP_SET_KEY(hm, k, v)                                                                     \
-	do {                                                                                                   \
-		if ((hm)->key_count >= APE_ARGS_HASHMAP_MAX_LEN) {                                             \
-			fprintf(stderr, "ERROR: Too many elements in hashmap\n");                              \
-		}                                                                                              \
-		unsigned int index = APE_ARGS_HASH_FUNCTION(k);                                                \
-		if ((hm)->array[index].is_set && memcmp((hm)->array[index].key, (k), strlen(k)) != 0) {        \
-			fprintf(stderr, "ERROR: Conflicting keys, not assigning\n");                           \
-		} else if ((hm)->array[index].is_set && memcmp((hm)->array[index].key, (k), strlen(k)) == 0) { \
-			free((hm)->array[index].value);                                                        \
-			(hm)->array[index].value = malloc(strlen(v) + 1);                                      \
-			memcpy((hm)->array[index].value, (v), strlen(v));                                      \
-			(hm)->array[index].value[strlen(v)] = 0;                                               \
-		} else {                                                                                       \
-			(hm)->array[index].key = malloc(strlen(k) + 1);                                        \
-			(hm)->array[index].value = malloc(strlen(v) + 1);                                      \
-			memcpy((hm)->array[index].key, (k), strlen(k));                                        \
-			memcpy((hm)->array[index].value, (v), strlen(v));                                      \
-			(hm)->array[index].key[strlen(k)] = 0;                                                 \
-			(hm)->array[index].value[strlen(v)] = 0;                                               \
-			(hm)->array[index].is_set = 1;                                                         \
-			(hm)->iterable[(hm)->key_count].key = malloc(strlen(k) + 1);                           \
-			memcpy((hm)->iterable[(hm)->key_count].key, (k), strlen(k));                           \
-			(hm)->iterable[(hm)->key_count].key[strlen(k)] = 0;                                    \
-			(hm)->iterable[(hm)->key_count].index = index;                                         \
-			(hm)->key_count++;                                                                     \
-		}                                                                                              \
+#define APE_ARGS_HASHMAP_SET_KEY(hm, k, v)                                                                                     \
+	do {                                                                                                                   \
+		if ((hm)->key_count >= APE_ARGS_HASHMAP_MAX_LEN) { fprintf(stderr, "ERROR: Too many elements in hashmap\n"); } \
+		unsigned int index = APE_ARGS_HASH_FUNCTION(k);                                                                \
+		if ((hm)->array[index].is_set && memcmp((hm)->array[index].key, (k), strlen(k)) != 0) {                        \
+			fprintf(stderr, "ERROR: Conflicting keys, not assigning\n");                                           \
+		} else if ((hm)->array[index].is_set && memcmp((hm)->array[index].key, (k), strlen(k)) == 0) {                 \
+			free((hm)->array[index].value);                                                                        \
+			(hm)->array[index].value = malloc(strlen(v) + 1);                                                      \
+			memcpy((hm)->array[index].value, (v), strlen(v));                                                      \
+			(hm)->array[index].value[strlen(v)] = 0;                                                               \
+		} else {                                                                                                       \
+			(hm)->array[index].key = malloc(strlen(k) + 1);                                                        \
+			(hm)->array[index].value = malloc(strlen(v) + 1);                                                      \
+			memcpy((hm)->array[index].key, (k), strlen(k));                                                        \
+			memcpy((hm)->array[index].value, (v), strlen(v));                                                      \
+			(hm)->array[index].key[strlen(k)] = 0;                                                                 \
+			(hm)->array[index].value[strlen(v)] = 0;                                                               \
+			(hm)->array[index].is_set = 1;                                                                         \
+			(hm)->iterable[(hm)->key_count].key = malloc(strlen(k) + 1);                                           \
+			memcpy((hm)->iterable[(hm)->key_count].key, (k), strlen(k));                                           \
+			(hm)->iterable[(hm)->key_count].key[strlen(k)] = 0;                                                    \
+			(hm)->iterable[(hm)->key_count].index = index;                                                         \
+			(hm)->key_count++;                                                                                     \
+		}                                                                                                              \
 	} while (0)
 
 #define APE_ARGS_HASHMAP_GET_KEY(hm, k)                                                                                           \
@@ -175,11 +200,11 @@ extern "C" {
 #include <string.h>
 
 typedef enum {
-	APE_ARGS_ALLOW_DASH = 1 << 0, // --key
-	APE_ARGS_ALLOW_DASH_EQ = 1 << 1, // --key=value
-	APE_ARGS_ALLOW_DASH_VAL = 1 << 2, // --key value
-	APE_ARGS_ALLOW_EQ = 1 << 3, // key=value
-	APE_ARGS_ALLOW_POSITIONAL = 1 << 4, // value (stored in positional array)
+	APE_ARGS_ALLOW_DASH = 1 << 0,	     // --key
+	APE_ARGS_ALLOW_DASH_EQ = 1 << 1,     // --key=value
+	APE_ARGS_ALLOW_DASH_VAL = 1 << 2,    // --key value
+	APE_ARGS_ALLOW_EQ = 1 << 3,	     // key=value
+	APE_ARGS_ALLOW_POSITIONAL = 1 << 4,  // value (stored in positional array)
 	APE_ARGS_ALLOW_SINGLE_DASH = 1 << 5, // any single '-' is interpreted as '--'
 } ape_args_parse_mode;
 
@@ -244,8 +269,7 @@ char *ape_args_shift_args(int *argc, char ***argv);
 #endif
 #endif
 
-APE_ARGS_PRIVATE int ape_args_hash_builtin(char *key)
-{
+APE_ARGS_PRIVATE int ape_args_hash_builtin(char *key) {
 	int h = 0;
 	char *c = key;
 #define _T(i) ((((i * 1252225 + 12854 / 12535) << 4 / 294) >> 1) - 6) % APE_ARGS_HASHMAP_MAX_LEN
@@ -263,18 +287,15 @@ APE_ARGS_PRIVATE int ape_args_hash_builtin(char *key)
 
 /* BEGIN ape_args_main.c */
 
-APE_ARGS_DEF inline char *ape_args_shift_args(int *argc, char ***argv)
-{
-	if ((*argc) <= 0)
-		return NULL;
+APE_ARGS_DEF inline char *ape_args_shift_args(int *argc, char ***argv) {
+	if ((*argc) <= 0) return NULL;
 	(*argc)--;
 	char *result = (*argv)[0];
 	(*argv)++;
 	return result;
 }
 
-APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_parsed_args *parsed)
-{
+APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_parsed_args *parsed) {
 	ape_args_parse_mode mode = opts->mode;
 	if (mode == 0) {
 		mode = APE_ARGS_ALLOW_DASH | APE_ARGS_ALLOW_DASH_EQ | APE_ARGS_ALLOW_DASH_VAL | APE_ARGS_ALLOW_SINGLE_DASH |
@@ -284,11 +305,9 @@ APE_ARGS_DEF int ape_args_parse_args(const ape_args_parse_opts *opts, ape_args_p
 	parsed->positional = (char **)APE_ARGS_MALLOC(positional_capacity * sizeof(char *));
 	int allow_positional = 1;
 	char *arg;
-	if (opts->ignore_first_arg)
-		arg = ape_args_shift_args(opts->argc, opts->argv);
+	if (opts->ignore_first_arg) arg = ape_args_shift_args(opts->argc, opts->argv);
 	while ((arg = ape_args_shift_args(opts->argc, opts->argv))) {
-		if (opts->stop_at && strcmp(opts->stop_at, arg) == 0)
-			break;
+		if (opts->stop_at && strcmp(opts->stop_at, arg) == 0) break;
 		char *eq;
 		int ap = 0;
 		if (!ap && (mode & (APE_ARGS_ALLOW_DASH | APE_ARGS_ALLOW_DASH_VAL | APE_ARGS_ALLOW_DASH_EQ))) {

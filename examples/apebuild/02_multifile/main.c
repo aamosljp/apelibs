@@ -5,8 +5,7 @@
 #include <stdio.h>
 #include "calc.h"
 
-int main(void)
-{
+int main(void) {
 	printf("Calculator Example\n");
 	printf("==================\n\n");
 

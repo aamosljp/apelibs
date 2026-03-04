@@ -1,0 +1,32 @@
+Example usage:
+    #define APE_LZ_IMPLEMENTATION
+    #include "ape_lz.h"
+
+    int main(void) {
+        const char *input = "Hello, world!";
+        ApeLZ4Result result = ape_lz4_compress((const uint8_t *)input, strlen(input), NULL);
+        if (result.error != APE_LZ4_OK) {
+            printf("Compression failed: %s\n", ape_lz4_error_string(result.error));
+            return 1;
+        }
+
+        ApeLZ4Result decompressed = ape_lz4_decompress(result.data, result.size);
+        if (decompressed.error != APE_LZ4_OK) {
+            printf("Decompression failed: %s\n", ape_lz4_error_string(decompressed.error));
+            APE_LZ_FREE(decompressed.data);
+            return 1;
+        }
+
+        printf("Original: %s\n", input);
+        printf("Compressed: %s\n", (const char *)result.data);
+        printf("Decompressed: %s\n", (const char *)decompressed.data);
+
+        APE_LZ_FREE(result.data);
+        APE_LZ_FREE(decompressed.data);
+        return 0;
+    }
+
+API functions:
+  ape_lz4_compress - Compress raw bytes into an LZ4 frame
+  ape_lz4_decompress - Decompress an LZ4 frame into raw bytes
+  ape_lz4_error_string - Returns a human-readable error message

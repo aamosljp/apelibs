@@ -12,6 +12,7 @@ source "tools/lib/option_parser"
 
 add_option "api-file" "string" "Filename containing api definitions (default: <lib_name>_api.h)"
 add_option "private-file" "string" "Filename containing private definitions (default: <lib_name>_internal.h"
+add_option "deps" "string" "Comma-separated list of library dependencies (e.g. ape_pack,apebuild)"
 
 if [[ -z "$lib_name" ]]; then
     print_usage "$exec_name"
@@ -63,3 +64,16 @@ tfc="${tfc//"template"/${lib_name,,}}"
 printf "%s\n" "$pfc" > "src/$lib_name/$private_file"
 printf "%s\n" "$afc" > "src/$lib_name/$api_file"
 printf "%s\n" "$tfc" > "src/$lib_name/test.c"
+
+# Create deps.txt if dependencies were specified
+if [[ -n "${options[deps]}" ]]; then
+    IFS=',' read -ra dep_list <<< "${options[deps]}"
+    for dep in "${dep_list[@]}"; do
+        dep="$(echo "$dep" | xargs)" # trim whitespace
+        if [[ ! -d "src/$dep" ]]; then
+            echo "WARNING: dependency '$dep' does not exist in src/"
+        fi
+        echo "$dep"
+    done > "src/$lib_name/deps.txt"
+    echo "Created deps.txt with ${#dep_list[@]} dependencies"
+fi

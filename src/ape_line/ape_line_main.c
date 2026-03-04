@@ -10,28 +10,22 @@
 
 static ape_line_state _ape_line_state_g = { 0 };
 
-APE_LINE_PRIVATE void ape_line_apply_raw(void)
-{
-	if (!_ape_line_state_g.s_is_tty)
-		return;
+APE_LINE_PRIVATE void ape_line_apply_raw(void) {
+	if (!_ape_line_state_g.s_is_tty) return;
 	tcsetattr(_ape_line_state_g.s_in_fd, TCSAFLUSH, &_ape_line_state_g.s_raw_in);
 }
 
-APE_LINE_PRIVATE void ape_line_restore(void)
-{
-	if (!_ape_line_state_g.s_is_tty)
-		return;
+APE_LINE_PRIVATE void ape_line_restore(void) {
+	if (!_ape_line_state_g.s_is_tty) return;
 	tcsetattr(_ape_line_state_g.s_in_fd, TCSAFLUSH, &_ape_line_state_g.s_saved_in);
 }
 
-APE_LINE_PRIVATE void ape_line_at_exit(void)
-{
+APE_LINE_PRIVATE void ape_line_at_exit(void) {
 	ape_line_restore();
 	ape_line_history_shutdown();
 }
 
-APE_LINE_PRIVATE void ape_line_signal_handler(int sig)
-{
+APE_LINE_PRIVATE void ape_line_signal_handler(int sig) {
 	switch (sig) {
 	case SIGTSTP:
 		ape_line_restore();
@@ -39,20 +33,17 @@ APE_LINE_PRIVATE void ape_line_signal_handler(int sig)
 		raise(SIGTSTP);
 		break;
 	case SIGCONT:
-		if (_ape_line_state_g.s_depth > 0)
-			ape_line_apply_raw();
+		if (_ape_line_state_g.s_depth > 0) ape_line_apply_raw();
 		break;
 	case SIGINT:
 		ape_line_editor_reset(&_ape_line_state_g.s_editor);
 		ape_line_puts("^C\n");
 		ape_line_redraw();
-	default:
-		break;
+	default: break;
 	}
 }
 
-APE_LINE_PRIVATE void ape_line_install_handlers()
-{
+APE_LINE_PRIVATE void ape_line_install_handlers() {
 	struct sigaction sa;
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_flags = SA_RESTART;
@@ -62,29 +53,22 @@ APE_LINE_PRIVATE void ape_line_install_handlers()
 	sigaction(SIGINT, &sa, NULL);
 }
 
-APE_LINE_PRIVATE int ape_line_def_is_done()
-{
+APE_LINE_PRIVATE int ape_line_def_is_done() {
 	int result = _ape_line_state_g.s_is_done == APE_LINE_TRUE || ape_line_editor_last_char(&_ape_line_state_g.s_editor) == '\n' ?
 			     APE_LINE_TRUE :
 			     APE_LINE_FALSE;
-	if (result == APE_LINE_TRUE)
-		_ape_line_state_g.s_is_done = APE_LINE_FALSE;
+	if (result == APE_LINE_TRUE) _ape_line_state_g.s_is_done = APE_LINE_FALSE;
 
 	return result;
 }
 
-APE_LINE_PRIVATE int ape_line_def_exec_cmd(char *cmd)
-{
-	if (strlen(cmd) > 0)
-		ape_line_history_append(cmd, NULL);
-	if (strcmp(cmd, "exit") == 0) {
-		exit(0);
-	}
+APE_LINE_PRIVATE int ape_line_def_exec_cmd(char *cmd) {
+	if (strlen(cmd) > 0) ape_line_history_append(cmd, NULL);
+	if (strcmp(cmd, "exit") == 0) { exit(0); }
 	return 0;
 }
 
-APE_LINE_PRIVATE int ape_line_def_char_handler(char c)
-{
+APE_LINE_PRIVATE int ape_line_def_char_handler(char c) {
 	static char seq[3];
 	static int seq_i = 0;
 	if (_ape_line_state_g.s_esc_seq) {
@@ -95,25 +79,17 @@ APE_LINE_PRIVATE int ape_line_def_char_handler(char c)
 				case 'A': /* up */
 				{
 					ape_line_history_entry *ent = ape_line_history_previous();
-					if (ent) {
-						ape_line_editor_set_str(&_ape_line_state_g.s_editor, ent->data, ent->data_len);
-					}
+					if (ent) { ape_line_editor_set_str(&_ape_line_state_g.s_editor, ent->data, ent->data_len); }
 					ape_line_redraw();
 				} break;
 				case 'B': /* down */
 				{
 					ape_line_history_entry *ent = ape_line_history_next();
-					if (ent) {
-						ape_line_editor_set_str(&_ape_line_state_g.s_editor, ent->data, ent->data_len);
-					}
+					if (ent) { ape_line_editor_set_str(&_ape_line_state_g.s_editor, ent->data, ent->data_len); }
 					ape_line_redraw();
 				} break;
-				case 'C': /* right */
-					ape_line_editor_move(&_ape_line_state_g.s_editor, 1);
-					break;
-				case 'D': /* left */
-					ape_line_editor_move(&_ape_line_state_g.s_editor, -1);
-					break;
+				case 'C': /* right */ ape_line_editor_move(&_ape_line_state_g.s_editor, 1); break;
+				case 'D': /* left */ ape_line_editor_move(&_ape_line_state_g.s_editor, -1); break;
 				}
 			}
 			_ape_line_state_g.s_esc_seq = 0;
@@ -146,10 +122,8 @@ APE_LINE_PRIVATE int ape_line_def_char_handler(char c)
 	return APE_LINE_FALSE;
 }
 
-APE_LINE_DEF int ape_line_init(const ape_line_opts *opts)
-{
-	if (_ape_line_state_g.s_initialized)
-		return 0;
+APE_LINE_DEF int ape_line_init(const ape_line_opts *opts) {
+	if (_ape_line_state_g.s_initialized) return 0;
 	_ape_line_state_g.s_opts = (opts) ? *opts : (ape_line_opts){ 0 };
 	_ape_line_state_g.s_opts.is_done_func = opts->is_done_func ? opts->is_done_func : ape_line_def_is_done;
 	_ape_line_state_g.s_opts.exec_cmd_func = opts->exec_cmd_func ? opts->exec_cmd_func : ape_line_def_exec_cmd;
@@ -158,51 +132,43 @@ APE_LINE_DEF int ape_line_init(const ape_line_opts *opts)
 	_ape_line_state_g.s_out_fd = STDOUT_FILENO;
 	_ape_line_state_g.s_is_tty = isatty(_ape_line_state_g.s_in_fd) && isatty(_ape_line_state_g.s_out_fd);
 	if (_ape_line_state_g.s_is_tty) {
-		if (tcgetattr(_ape_line_state_g.s_in_fd, &_ape_line_state_g.s_saved_in) < 0)
-			return -1;
+		if (tcgetattr(_ape_line_state_g.s_in_fd, &_ape_line_state_g.s_saved_in) < 0) return -1;
 		_ape_line_state_g.s_raw_in = _ape_line_state_g.s_saved_in;
 
 		_ape_line_state_g.s_raw_in.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
 		_ape_line_state_g.s_raw_in.c_oflag &= ~(OPOST);
 		_ape_line_state_g.s_raw_in.c_cflag |= (CS8);
 		_ape_line_state_g.s_raw_in.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-		if (_ape_line_state_g.s_opts.raw_mode_cbreak)
-			_ape_line_state_g.s_raw_in.c_lflag |= ISIG;
+		if (_ape_line_state_g.s_opts.raw_mode_cbreak) _ape_line_state_g.s_raw_in.c_lflag |= ISIG;
 		_ape_line_state_g.s_raw_in.c_cc[VMIN] = 1;
 		_ape_line_state_g.s_raw_in.c_cc[VTIME] = 0;
 
 		atexit(ape_line_at_exit);
-		if (_ape_line_state_g.s_opts.install_handlers)
-			ape_line_install_handlers();
+		if (_ape_line_state_g.s_opts.install_handlers) ape_line_install_handlers();
 	}
 	_ape_line_state_g.s_initialized = APE_LINE_TRUE;
 	return 0;
 }
 
-APE_LINE_DEF void ape_line_shutdown()
-{
-	if (!_ape_line_state_g.s_initialized)
-		return;
+APE_LINE_DEF void ape_line_shutdown() {
+	if (!_ape_line_state_g.s_initialized) return;
 	ape_line_restore();
 	ape_line_history_shutdown();
 	_ape_line_state_g.s_depth = 0;
 	_ape_line_state_g.s_initialized = 0;
 }
 
-APE_LINE_PRIVATE int ape_line_write_prompt()
-{
+APE_LINE_PRIVATE int ape_line_write_prompt() {
 	char *p = (char *)APE_LINE_MALLOC(_ape_line_state_g.s_prompt_len + 1);
 	memcpy(p, _ape_line_state_g.s_prompt, _ape_line_state_g.s_prompt_len);
 	p[_ape_line_state_g.s_prompt_len] = 0;
-	if (!p)
-		return 0;
+	if (!p) return 0;
 	(void)!write(_ape_line_state_g.s_out_fd, "\r\x1b[K", 4);
 	size_t n = strlen(p), w = 0;
 	while (w < n) {
 		ssize_t r = write(_ape_line_state_g.s_out_fd, p + w, n - w);
 		if (r < 0) {
-			if (errno == EINTR)
-				continue;
+			if (errno == EINTR) continue;
 			ape_line_set_error(APE_LINE_ERROR_WRITE);
 			return -1;
 		}
@@ -211,14 +177,12 @@ APE_LINE_PRIVATE int ape_line_write_prompt()
 	return 0;
 }
 
-APE_LINE_DEF int ape_line_puts(const char *s)
-{
+APE_LINE_DEF int ape_line_puts(const char *s) {
 	size_t n = strlen(s), w = 0;
 	while (w < n) {
 		ssize_t r = write(_ape_line_state_g.s_out_fd, s + w, n - w);
 		if (r < 0) {
-			if (errno == EINTR)
-				continue;
+			if (errno == EINTR) continue;
 			ape_line_set_error(APE_LINE_ERROR_WRITE);
 			return -1;
 		}
@@ -227,10 +191,8 @@ APE_LINE_DEF int ape_line_puts(const char *s)
 	return 0;
 }
 
-APE_LINE_DEF int ape_line_redraw()
-{
-	if (!_ape_line_state_g.s_prompt)
-		return 0;
+APE_LINE_DEF int ape_line_redraw() {
+	if (!_ape_line_state_g.s_prompt) return 0;
 	(void)!write(_ape_line_state_g.s_out_fd, "\x1b[2K", 4);
 	ape_line_write_prompt();
 	char *s = (char *)APE_LINE_MALLOC(_ape_line_state_g.s_editor.buf_len);
@@ -242,8 +204,7 @@ APE_LINE_DEF int ape_line_redraw()
 	return 0;
 }
 
-APE_LINE_DEF ssize_t ape_line_read(const char *prompt, char **out_line)
-{
+APE_LINE_DEF ssize_t ape_line_read(const char *prompt, char **out_line) {
 	if (!_ape_line_state_g.s_is_tty) {
 		ape_line_set_error(APE_LINE_ERROR_NOT_TTY);
 		return -1;
@@ -266,8 +227,7 @@ APE_LINE_DEF ssize_t ape_line_read(const char *prompt, char **out_line)
 	_ape_line_state_g.s_prompt = (char *)APE_LINE_MALLOC(_ape_line_state_g.s_prompt_len);
 	memcpy(_ape_line_state_g.s_prompt, prompt, _ape_line_state_g.s_prompt_len);
 
-	if (_ape_line_state_g.s_depth++ == 0)
-		ape_line_apply_raw();
+	if (_ape_line_state_g.s_depth++ == 0) ape_line_apply_raw();
 	if (ape_line_write_prompt() < 0) {
 		_ape_line_state_g.s_depth--;
 		return -1;
@@ -299,9 +259,7 @@ APE_LINE_DEF ssize_t ape_line_read(const char *prompt, char **out_line)
 			return 0;
 		}
 
-		if (_ape_line_state_g.s_opts.char_handler_func((char)ch) == APE_LINE_FALSE) {
-			continue;
-		}
+		if (_ape_line_state_g.s_opts.char_handler_func((char)ch) == APE_LINE_FALSE) { continue; }
 
 		if (_ape_line_state_g.s_opts.is_done_func()) {
 			if (_ape_line_state_g.s_editor.buf_len > 0 &&

@@ -1,0 +1,61 @@
+Example usage:
+  #define APE_PACK_IMPLEMENTATION
+  #include "ape_pack.h"
+
+  int main(void) {
+      ApePackReader *reader = ape_pack_reader_from("hello world", 11);
+      char buf[12];
+      ape_pack_reader_read(reader, buf, 11);
+      printf("%s\n", buf); // Should print "hello world"
+      return 0;
+  }
+
+API:
+
+  Reader:
+    ape_pack_reader_from - Creates a reader from a buffer
+    ape_pack_reader_eof - Returns true if the reader is at the end of the buffer
+    ape_pack_reader_skip - Skips n bytes in the reader
+    ape_pack_reader_reset - Resets the reader to the beginning of the buffer
+
+    Unsigned integer reads (endianness-aware):
+      ape_pack_reader_read_u8
+      ape_pack_reader_read_u16
+      ape_pack_reader_read_u32
+      ape_pack_reader_read_u64
+
+    Signed integer reads (endianness-aware):
+      ape_pack_reader_read_i8
+      ape_pack_reader_read_i16
+      ape_pack_reader_read_i32
+      ape_pack_reader_read_i64
+
+    Floating point reads (endianness-aware):
+      ape_pack_reader_read_f32
+      ape_pack_reader_read_f64
+
+    Raw byte reads (no endianness conversion):
+      ape_pack_reader_read
+
+  Writer:
+    ape_pack_writer_to - Creates a writer to a buffer
+    ape_pack_writer_reset - Resets the writer to the beginning of the buffer
+
+    Unsigned integer writes (endianness-aware):
+      ape_pack_writer_write_u8
+      ape_pack_writer_write_u16
+      ape_pack_writer_write_u32
+      ape_pack_writer_write_u64
+
+    Signed integer writes (endianness-aware):
+      ape_pack_writer_write_i8
+      ape_pack_writer_write_i16
+      ape_pack_writer_write_i32
+      ape_pack_writer_write_i64
+
+    Floating point writes (endianness-aware):
+      ape_pack_writer_write_f32
+      ape_pack_writer_write_f64
+
+    Raw byte writes (no endianness conversion):
+      ape_pack_writer_write

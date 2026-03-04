@@ -1,6 +1,9 @@
 #ifndef TEMPLATE_INCLUDED
 #define TEMPLATE_INCLUDED
 
+#define TEMPLATE_VERSION_MAJOR 0
+#define TEMPLATE_VERSION_MINOR 1
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #define TEMPLATE_WINDOWS
 #if defined(_WIN64)

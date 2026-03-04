@@ -9,7 +9,9 @@ Almost everything in this repo is released into the public domain, check each he
 Each library will have its own instructions
 
 - ape_line.h - line input/editor + termios-wrapper
-- ape_args.h - command-line argument parser
+- ape_pack.h - simple pack/unpacker
+- ape_lz.h - LZ4 compression/decompression
+- apedsa.h - Currently a dynamic array + type-safe hashmap (performance on par with std::unordered_map)
 
 I will be adding more libraries overtime. PRs and issues are also welcome.
 

@@ -5,8 +5,7 @@
 #include <stdio.h>
 #include "mathlib.h"
 
-int main(void)
-{
+int main(void) {
 	printf("Math Library Demo\n");
 	printf("=================\n\n");
 

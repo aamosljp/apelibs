@@ -1,0 +1,29 @@
+
+  #define APEDSA_IMPLEMENTATION
+  #include "apedsa.h"
+
+**** Dynamic Array ****
+
+Sample code for dynamic array usage:
+
+  int main(void) {
+      int *arr = NULL;
+      apedsa_da_push(arr, 42);
+      apedsa_da_push(arr, 1337);
+      apedsa_da_push(arr, 420);
+      for (int i = 0; i < apedsa_da_count(arr); i++) {
+          printf("%d\n", arr[i]);
+      }
+  }
+
+Dynamic array usage:
+  apedsa_da_count - Returns the number of elements in da as an unsigned integer
+  apedsa_da_push - Pushes an element onto da
+  apedsa_da_addn - Adds n uninitialized values to da
+  apedsa_da_last - Returns the last element in da
+  apedsa_da_insert - Inserts an element at index i
+  apedsa_da_delte - Deletes an element at index i
+  apedsa_da_delete_swap - Deletes an element at index i and replaces it with the last element
+  apedsa_da_cap - Returns the capacity of da
+  apedsa_da_reserve - Reserves space for n elements in da
+
