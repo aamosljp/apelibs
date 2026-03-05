@@ -5,7 +5,8 @@
  * Reader Tests
  * ============================================================================ */
 
-TEST(read_u8) {
+TEST(read_u8)
+{
 	unsigned char buf[4] = { 0x00, 0x7F, 0x80, 0xFF };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
 	ASSERT_EQ(ape_pack_reader_read_u8(&reader), 0x00);
@@ -15,7 +16,8 @@ TEST(read_u8) {
 	return PASSED;
 }
 
-TEST(read_u16) {
+TEST(read_u16)
+{
 	/* little-endian: LSB first */
 	unsigned char buf[4] = { 0x02, 0x01, 0xBB, 0xAA };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
@@ -24,7 +26,8 @@ TEST(read_u16) {
 	return PASSED;
 }
 
-TEST(read_u32) {
+TEST(read_u32)
+{
 	/* little-endian: LSB first */
 	unsigned char buf[4] = { 0x04, 0x03, 0x02, 0x01 };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
@@ -32,7 +35,8 @@ TEST(read_u32) {
 	return PASSED;
 }
 
-TEST(read_u64) {
+TEST(read_u64)
+{
 	/* little-endian: LSB first */
 	unsigned char buf[8] = { 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01 };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
@@ -40,7 +44,8 @@ TEST(read_u64) {
 	return PASSED;
 }
 
-TEST(read_i8) {
+TEST(read_i8)
+{
 	unsigned char buf[4] = { 0xFF, 0x00, 0x7F, 0x80 };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
 	ASSERT_EQ(ape_pack_reader_read_i8(&reader), -1);
@@ -50,7 +55,8 @@ TEST(read_i8) {
 	return PASSED;
 }
 
-TEST(read_i16) {
+TEST(read_i16)
+{
 	/* little-endian */
 	unsigned char buf[4] = { 0xFF, 0xFF, 0x00, 0x01 };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
@@ -59,7 +65,8 @@ TEST(read_i16) {
 	return PASSED;
 }
 
-TEST(read_i32) {
+TEST(read_i32)
+{
 	/* little-endian: -1 = 0xFFFFFFFF */
 	unsigned char buf[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
@@ -67,7 +74,8 @@ TEST(read_i32) {
 	return PASSED;
 }
 
-TEST(read_i64) {
+TEST(read_i64)
+{
 	/* little-endian: -1 = 0xFFFFFFFFFFFFFFFF */
 	unsigned char buf[8] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
@@ -75,7 +83,8 @@ TEST(read_i64) {
 	return PASSED;
 }
 
-TEST(read_f32) {
+TEST(read_f32)
+{
 	/* write 1.0f then read it back from known bytes */
 	unsigned char buf[4] = { 0 };
 	float val = 1.0f;
@@ -85,7 +94,8 @@ TEST(read_f32) {
 	return PASSED;
 }
 
-TEST(read_f64) {
+TEST(read_f64)
+{
 	unsigned char buf[8] = { 0 };
 	double val = 3.14159265358979323846;
 	memcpy(buf, &val, sizeof(val));
@@ -94,7 +104,8 @@ TEST(read_f64) {
 	return PASSED;
 }
 
-TEST(read_raw) {
+TEST(read_raw)
+{
 	unsigned char buf[] = "hello world";
 	ApePackReader reader = ape_pack_reader_from(buf, 11);
 	char out[16] = { 0 };
@@ -104,7 +115,8 @@ TEST(read_raw) {
 	return PASSED;
 }
 
-TEST(read_le_byte_order) {
+TEST(read_le_byte_order)
+{
 	/* verify little-endian reads LSB first */
 	unsigned char buf[8] = { 0x78, 0x56, 0x34, 0x12, 0xEF, 0xBE, 0xAD, 0xDE };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
@@ -113,7 +125,8 @@ TEST(read_le_byte_order) {
 	return PASSED;
 }
 
-TEST(read_be_byte_order) {
+TEST(read_be_byte_order)
+{
 	/* verify big-endian reads MSB first */
 	unsigned char buf[8] = { 0x12, 0x34, 0x56, 0x78, 0xDE, 0xAD, 0xBE, 0xEF };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
@@ -123,7 +136,8 @@ TEST(read_be_byte_order) {
 	return PASSED;
 }
 
-TEST(reader_offset_tracking) {
+TEST(reader_offset_tracking)
+{
 	unsigned char buf[64] = { 0 };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
 	ASSERT_EQ(reader.offset, 0);
@@ -142,7 +156,8 @@ TEST(reader_offset_tracking) {
 	return PASSED;
 }
 
-TEST(reader_eof) {
+TEST(reader_eof)
+{
 	unsigned char buf[2] = { 0xAA, 0xBB };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
 	ASSERT_FALSE(ape_pack_reader_eof(&reader));
@@ -156,7 +171,8 @@ TEST(reader_eof) {
 	return PASSED;
 }
 
-TEST(reader_skip) {
+TEST(reader_skip)
+{
 	unsigned char buf[8] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
 	ape_pack_reader_skip(&reader, 3);
@@ -171,7 +187,8 @@ TEST(reader_skip) {
 	return PASSED;
 }
 
-TEST(reader_reset) {
+TEST(reader_reset)
+{
 	unsigned char buf[4] = { 0xAA, 0xBB, 0xCC, 0xDD };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
 	ape_pack_reader_read_u16(&reader);
@@ -183,7 +200,8 @@ TEST(reader_reset) {
 	return PASSED;
 }
 
-TEST(read_raw_bounds) {
+TEST(read_raw_bounds)
+{
 	unsigned char buf[4] = { 0x01, 0x02, 0x03, 0x04 };
 	ApePackReader reader = ape_pack_reader_from(buf, sizeof(buf));
 	char out[8] = { 0 };
@@ -202,17 +220,23 @@ TEST(read_raw_bounds) {
  * Writer Tests
  * ============================================================================ */
 
-TEST(write_u8) {
+TEST(write_u8)
+{
 	unsigned char buf[8] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	uint8_t i;
-	for (i = 0; i < 8; i++) { ape_pack_writer_write_u8(&writer, i * 10); }
+	for (i = 0; i < 8; i++) {
+		ape_pack_writer_write_u8(&writer, i * 10);
+	}
 	ASSERT_EQ(writer.offset, 8);
-	for (i = 0; i < 8; i++) { ASSERT_EQ(buf[i], i * 10); }
+	for (i = 0; i < 8; i++) {
+		ASSERT_EQ(buf[i], i * 10);
+	}
 	return PASSED;
 }
 
-TEST(write_u16) {
+TEST(write_u16)
+{
 	unsigned char buf[16] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_u16(&writer, 0x0102);
@@ -225,7 +249,8 @@ TEST(write_u16) {
 	return PASSED;
 }
 
-TEST(write_u32) {
+TEST(write_u32)
+{
 	unsigned char buf[8] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_u32(&writer, 0x01020304);
@@ -237,7 +262,8 @@ TEST(write_u32) {
 	return PASSED;
 }
 
-TEST(write_u64) {
+TEST(write_u64)
+{
 	unsigned char buf[8] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_u64(&writer, 0x0102030405060708ULL);
@@ -253,7 +279,8 @@ TEST(write_u64) {
 	return PASSED;
 }
 
-TEST(write_i8) {
+TEST(write_i8)
+{
 	unsigned char buf[4] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_i8(&writer, -1);
@@ -267,7 +294,8 @@ TEST(write_i8) {
 	return PASSED;
 }
 
-TEST(write_i16) {
+TEST(write_i16)
+{
 	unsigned char buf[4] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_i16(&writer, -1);
@@ -281,7 +309,8 @@ TEST(write_i16) {
 	return PASSED;
 }
 
-TEST(write_i32) {
+TEST(write_i32)
+{
 	unsigned char buf[4] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_i32(&writer, -1);
@@ -292,16 +321,20 @@ TEST(write_i32) {
 	return PASSED;
 }
 
-TEST(write_i64) {
+TEST(write_i64)
+{
 	unsigned char buf[8] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_i64(&writer, -1);
 	int i;
-	for (i = 0; i < 8; i++) { ASSERT_EQ(buf[i], 0xFF); }
+	for (i = 0; i < 8; i++) {
+		ASSERT_EQ(buf[i], 0xFF);
+	}
 	return PASSED;
 }
 
-TEST(write_f32) {
+TEST(write_f32)
+{
 	unsigned char buf[4] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_f32(&writer, 1.0f);
@@ -312,7 +345,8 @@ TEST(write_f32) {
 	return PASSED;
 }
 
-TEST(write_f64) {
+TEST(write_f64)
+{
 	unsigned char buf[8] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_f64(&writer, 3.14159265358979323846);
@@ -322,7 +356,8 @@ TEST(write_f64) {
 	return PASSED;
 }
 
-TEST(write_raw) {
+TEST(write_raw)
+{
 	unsigned char buf[16] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	char data[] = "hello world";
@@ -336,7 +371,8 @@ TEST(write_raw) {
  * Writer/Reader Roundtrip Tests
  * ============================================================================ */
 
-TEST(roundtrip_le) {
+TEST(roundtrip_le)
+{
 	unsigned char buf[64] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	/* endianess 0 = little-endian (default) */
@@ -363,7 +399,8 @@ TEST(roundtrip_le) {
 	return PASSED;
 }
 
-TEST(roundtrip_be) {
+TEST(roundtrip_be)
+{
 	unsigned char buf[64] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	writer.endianess = 1; /* big-endian */
@@ -390,7 +427,8 @@ TEST(roundtrip_be) {
 	return PASSED;
 }
 
-TEST(roundtrip_be_byte_order) {
+TEST(roundtrip_be_byte_order)
+{
 	unsigned char buf[8] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	writer.endianess = 1;
@@ -403,7 +441,8 @@ TEST(roundtrip_be_byte_order) {
 	return PASSED;
 }
 
-TEST(writer_offset_tracking) {
+TEST(writer_offset_tracking)
+{
 	unsigned char buf[64] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ASSERT_EQ(writer.offset, 0);
@@ -422,7 +461,8 @@ TEST(writer_offset_tracking) {
 	return PASSED;
 }
 
-TEST(writer_reset) {
+TEST(writer_reset)
+{
 	unsigned char buf[8] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	ape_pack_writer_write_u32(&writer, 0xAAAAAAAA);
@@ -467,7 +507,8 @@ typedef struct {
 
 #define MOCK_ENTITY_PACKED_SIZE 35
 
-static MockEntity mock_entity_default(void) {
+static MockEntity mock_entity_default(void)
+{
 	MockEntity e;
 	e.type = 0x03;
 	e.flags = 0xABCD;
@@ -483,7 +524,8 @@ static MockEntity mock_entity_default(void) {
 	return e;
 }
 
-static void mock_entity_write(ApePackWriter *w, const MockEntity *e) {
+static void mock_entity_write(ApePackWriter *w, const MockEntity *e)
+{
 	ape_pack_writer_write_u8(w, e->type);
 	ape_pack_writer_write_u16(w, e->flags);
 	ape_pack_writer_write_u32(w, e->id);
@@ -494,7 +536,8 @@ static void mock_entity_write(ApePackWriter *w, const MockEntity *e) {
 	ape_pack_writer_write(w, (void *)e->tag, 4);
 }
 
-static MockEntity mock_entity_read(ApePackReader *r) {
+static MockEntity mock_entity_read(ApePackReader *r)
+{
 	MockEntity e;
 	e.type = ape_pack_reader_read_u8(r);
 	e.flags = ape_pack_reader_read_u16(r);
@@ -507,7 +550,8 @@ static MockEntity mock_entity_read(ApePackReader *r) {
 	return e;
 }
 
-static int mock_entity_eq(const MockEntity *a, const MockEntity *b) {
+static int mock_entity_eq(const MockEntity *a, const MockEntity *b)
+{
 	return a->type == b->type && a->flags == b->flags && a->id == b->id && a->health == b->health && a->score == b->score &&
 	       a->speed == b->speed && a->pos_x == b->pos_x && a->tag[0] == b->tag[0] && a->tag[1] == b->tag[1] && a->tag[2] == b->tag[2] &&
 	       a->tag[3] == b->tag[3];
@@ -551,7 +595,8 @@ static const unsigned char MOCK_BE_BYTES[MOCK_ENTITY_PACKED_SIZE] = {
 	0x54, 0x45, 0x53, 0x54,				/* tag */
 };
 
-TEST(struct_read_le) {
+TEST(struct_read_le)
+{
 	unsigned char buf[MOCK_ENTITY_PACKED_SIZE];
 	memcpy(buf, MOCK_LE_BYTES, MOCK_ENTITY_PACKED_SIZE);
 
@@ -571,7 +616,8 @@ TEST(struct_read_le) {
 	return PASSED;
 }
 
-TEST(struct_read_be) {
+TEST(struct_read_be)
+{
 	unsigned char buf[MOCK_ENTITY_PACKED_SIZE];
 	memcpy(buf, MOCK_BE_BYTES, MOCK_ENTITY_PACKED_SIZE);
 
@@ -592,7 +638,8 @@ TEST(struct_read_be) {
 	return PASSED;
 }
 
-TEST(struct_write_le) {
+TEST(struct_write_le)
+{
 	unsigned char buf[MOCK_ENTITY_PACKED_SIZE] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	MockEntity e = mock_entity_default();
@@ -603,7 +650,8 @@ TEST(struct_write_le) {
 	return PASSED;
 }
 
-TEST(struct_write_be) {
+TEST(struct_write_be)
+{
 	unsigned char buf[MOCK_ENTITY_PACKED_SIZE] = { 0 };
 	ApePackWriter writer = ape_pack_writer_to(buf, sizeof(buf));
 	writer.endianess = 1;
@@ -615,7 +663,8 @@ TEST(struct_write_be) {
 	return PASSED;
 }
 
-TEST(struct_roundtrip_le) {
+TEST(struct_roundtrip_le)
+{
 	unsigned char buf[MOCK_ENTITY_PACKED_SIZE] = { 0 };
 	MockEntity original = mock_entity_default();
 
@@ -630,7 +679,8 @@ TEST(struct_roundtrip_le) {
 	return PASSED;
 }
 
-TEST(struct_roundtrip_be) {
+TEST(struct_roundtrip_be)
+{
 	unsigned char buf[MOCK_ENTITY_PACKED_SIZE] = { 0 };
 	MockEntity original = mock_entity_default();
 
@@ -647,7 +697,8 @@ TEST(struct_roundtrip_be) {
 	return PASSED;
 }
 
-static void run_reader_tests(void) {
+static void run_reader_tests(void)
+{
 	LOG_INFO("Reader tests:");
 	RUN_TEST(read_u8);
 	RUN_TEST(read_u16);
@@ -670,7 +721,8 @@ static void run_reader_tests(void) {
 	LOG_INFO("");
 }
 
-static void run_writer_tests(void) {
+static void run_writer_tests(void)
+{
 	LOG_INFO("Writer tests:");
 	RUN_TEST(write_u8);
 	RUN_TEST(write_u16);
@@ -686,7 +738,8 @@ static void run_writer_tests(void) {
 	LOG_INFO("");
 }
 
-static void run_roundtrip_tests(void) {
+static void run_roundtrip_tests(void)
+{
 	LOG_INFO("Roundtrip tests:");
 	RUN_TEST(roundtrip_le);
 	RUN_TEST(roundtrip_be);
@@ -696,7 +749,8 @@ static void run_roundtrip_tests(void) {
 	LOG_INFO("");
 }
 
-static void run_struct_tests(void) {
+static void run_struct_tests(void)
+{
 	LOG_INFO("Struct tests:");
 	RUN_TEST(struct_read_le);
 	RUN_TEST(struct_read_be);
@@ -707,7 +761,8 @@ static void run_struct_tests(void) {
 	LOG_INFO("");
 }
 
-int main(void) {
+int main(void)
+{
 	LOG_INFO("Running tests...");
 	run_reader_tests();
 	run_writer_tests();
@@ -715,7 +770,9 @@ int main(void) {
 	run_struct_tests();
 	LOG_INFO("Tests finished");
 	LOG_INFO("%d Total", tests_run);
-	if (tests_failed > 0) LOG_INFO("%d \x1b[31mFAILED\x1b[0m", tests_failed);
-	if (tests_passed > 0) LOG_INFO("%d \x1b[32mPASSED\x1b[0m", tests_passed);
+	if (tests_failed > 0)
+		LOG_INFO("%d \x1b[31mFAILED\x1b[0m", tests_failed);
+	if (tests_passed > 0)
+		LOG_INFO("%d \x1b[32mPASSED\x1b[0m", tests_passed);
 	return tests_failed > 0 ? 1 : 0;
 }

@@ -6,11 +6,11 @@ AlignEscapedNewlines: Left
 AlignOperands: true
 AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: false
-AllowShortBlocksOnASingleLine: true
+AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: true
-AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
@@ -21,7 +21,7 @@ BraceWrapping:
   AfterClass: false
   AfterControlStatement: false
   AfterEnum: false
-  AfterFunction: false
+  AfterFunction: true
   AfterNamespace: true
   AfterObjCDeclaration: false
   AfterStruct: false
@@ -57,8 +57,8 @@ IncludeCategories:
   - Regex: ".*"
     Priority: 1
 IncludeIsMainRegex: "(Test)?$"
-IndentCaseLabels: false
-IndentGotoLabels: false
+IndentCaseLabels: true
+IndentGotoLabels: true
 IndentPPDirectives: None
 IndentWidth: 8
 IndentWrappedFunctionNames: false

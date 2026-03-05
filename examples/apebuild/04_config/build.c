@@ -2,7 +2,8 @@
 #include "../../../include/ape_config.h"
 #include <stdio.h>
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 	APE_REBUILD(argc, argv);
 
 	/* Initialize build context */

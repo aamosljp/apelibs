@@ -17,7 +17,8 @@ static int tests_failed = 0;
 
 #define TEST(name)                                                                \
 	static int test_##name(void);                                             \
-	static void run_test_##name(void) {                                       \
+	static void run_test_##name(void)                                         \
+	{                                                                         \
 		tests_run++;                                                      \
 		if (test_##name() == FAILED) {                                    \
 			tests_failed++;                                           \

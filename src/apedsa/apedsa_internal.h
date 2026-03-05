@@ -5,7 +5,6 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <xmmintrin.h>
 
 /* User can define a custom function prefix (eg. static) */
 #ifndef APEDSA_DEF

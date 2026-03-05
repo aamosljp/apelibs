@@ -7,13 +7,15 @@
 #define APEDSA_STRING_ARENA_BLOCKSIZE_MAX 1 << 20
 #endif
 
-APEDSA_DEF char *apedsa_string_arena_alloc(ApedsaStringArena *arena, char *str) {
+APEDSA_DEF char *apedsa_string_arena_alloc(ApedsaStringArena *arena, char *str)
+{
 	char *p;
 	size_t len = strlen(str) + 1;
 	if (len > arena->remaining) {
 		size_t blocksize = arena->block;
 		blocksize = (size_t)(APEDSA_STRING_ARENA_BLOCKSIZE_MIN) << (blocksize >> 1);
-		if (blocksize < (size_t)(APEDSA_STRING_ARENA_BLOCKSIZE_MAX)) ++arena->block;
+		if (blocksize < (size_t)(APEDSA_STRING_ARENA_BLOCKSIZE_MAX))
+			++arena->block;
 		if (len > blocksize) {
 			// Just allocate the full size
 			ApedsaStringBlock *block = (ApedsaStringBlock *)APEDSA_MALLOC(sizeof(*block) - 8 + len);
@@ -41,7 +43,8 @@ APEDSA_DEF char *apedsa_string_arena_alloc(ApedsaStringArena *arena, char *str) 
 	return p;
 }
 
-APEDSA_DEF void apedsa_string_arena_reset(ApedsaStringArena *arena) {
+APEDSA_DEF void apedsa_string_arena_reset(ApedsaStringArena *arena)
+{
 	ApedsaStringBlock *x, *y;
 	x = arena->blocks;
 	while (x) {

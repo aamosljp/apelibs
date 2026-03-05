@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include "../../../include/ape_config.h"
 
-int main() {
+int main()
+{
 	printf("Config example program\n");
 
 	/* Create a simple config */

@@ -16,13 +16,15 @@
 #ifdef __EMSCRIPTEN__
 EMSCRIPTEN_KEEPALIVE
 #endif
-int add(int a, int b) {
+int add(int a, int b)
+{
 	int result = a + b;
 	printf("add(%d, %d) = %d\n", a, b, result);
 	return result;
 }
 
-int main(void) {
+int main(void)
+{
 	printf("Hello from WebAssembly!\n");
 	printf("This program was compiled with Emscripten.\n");
 	printf("2 + 3 = %d\n", add(2, 3));

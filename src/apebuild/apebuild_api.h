@@ -92,11 +92,14 @@ extern "C" {
 #define ape_da_append_many(da, new_items, n)                                                                \
 	do {                                                                                                \
 		if ((da)->count + (n) > (da)->capacity) {                                                   \
-			if ((da)->capacity == 0) (da)->capacity = APEBUILD_INIT_CAP;                        \
-			while ((da)->count + (n) > (da)->capacity) (da)->capacity *= 2;                     \
+			if ((da)->capacity == 0)                                                            \
+				(da)->capacity = APEBUILD_INIT_CAP;                                         \
+			while ((da)->count + (n) > (da)->capacity)                                          \
+				(da)->capacity *= 2;                                                        \
 			(da)->items = APEBUILD_REALLOC((da)->items, (da)->capacity * sizeof(*(da)->items)); \
 		}                                                                                           \
-		for (size_t _i = 0; _i < (n); _i++) (da)->items[(da)->count++] = (new_items)[_i];           \
+		for (size_t _i = 0; _i < (n); _i++)                                                         \
+			(da)->items[(da)->count++] = (new_items)[_i];                                       \
 	} while (0)
 
 #define ape_da_prepend(da, item)                                                                            \
@@ -105,7 +108,8 @@ extern "C" {
 			(da)->capacity = (da)->capacity == 0 ? APEBUILD_INIT_CAP : (da)->capacity * 2;      \
 			(da)->items = APEBUILD_REALLOC((da)->items, (da)->capacity * sizeof(*(da)->items)); \
 		}                                                                                           \
-		for (size_t _i = (da)->count; _i > 0; _i--) (da)->items[_i] = (da)->items[_i - 1];          \
+		for (size_t _i = (da)->count; _i > 0; _i--)                                                 \
+			(da)->items[_i] = (da)->items[_i - 1];                                              \
 		(da)->items[0] = (item);                                                                    \
 		(da)->count++;                                                                              \
 	} while (0)
@@ -116,15 +120,17 @@ extern "C" {
 			(da)->capacity = (da)->capacity == 0 ? APEBUILD_INIT_CAP : (da)->capacity * 2;      \
 			(da)->items = APEBUILD_REALLOC((da)->items, (da)->capacity * sizeof(*(da)->items)); \
 		}                                                                                           \
-		for (size_t _i = (da)->count; _i > (index); _i--) (da)->items[_i] = (da)->items[_i - 1];    \
+		for (size_t _i = (da)->count; _i > (index); _i--)                                           \
+			(da)->items[_i] = (da)->items[_i - 1];                                              \
 		(da)->items[index] = (item);                                                                \
 		(da)->count++;                                                                              \
 	} while (0)
 
-#define ape_da_remove(da, index)                                                                             \
-	do {                                                                                                 \
-		for (size_t _i = (index); _i < (da)->count - 1; _i++) (da)->items[_i] = (da)->items[_i + 1]; \
-		(da)->count--;                                                                               \
+#define ape_da_remove(da, index)                                      \
+	do {                                                          \
+		for (size_t _i = (index); _i < (da)->count - 1; _i++) \
+			(da)->items[_i] = (da)->items[_i + 1];        \
+		(da)->count--;                                        \
 	} while (0)
 
 #define ape_da_pop(da) ((da)->items[--(da)->count])
@@ -822,9 +828,11 @@ int ape_build_get_cpu_count(void);
 int ape_self_needs_rebuild(const char *binary, const char *source);
 int ape_self_rebuild(int argc, char **argv, const char *source);
 
-#define APE_REBUILD(argc, argv)                                                                                         \
-	do {                                                                                                            \
-		if (ape_self_needs_rebuild((argv)[0], __FILE__)) { return ape_self_rebuild((argc), (argv), __FILE__); } \
+#define APE_REBUILD(argc, argv)                                            \
+	do {                                                               \
+		if (ape_self_needs_rebuild((argv)[0], __FILE__)) {         \
+			return ape_self_rebuild((argc), (argv), __FILE__); \
+		}                                                          \
 	} while (0)
 
 #if defined(__cplusplus)

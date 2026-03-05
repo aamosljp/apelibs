@@ -42,6 +42,7 @@
 #endif
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -54,7 +55,7 @@ extern void apedsa_rand_seed(size_t seed);
 extern void apedsa_da_murmurhash3_128(const void *key, size_t len, size_t seed, void *out);
 /// This one just calls murmurhash and discards the unused bits
 extern size_t apedsa_hash_bytes(void *p, size_t len, size_t seed);
-/// Hash a null-terminated string
+/// Hash a null-terminated string, also discards unused bits
 extern size_t apedsa_hash_string(char *str, size_t seed);
 
 // Simple string arena implementation
@@ -107,11 +108,12 @@ extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_
 
 #define APEDSA_OFFSETOF(v, f) ((char *)&(v)->f - (char *)(v))
 
+#define APEDSA_CACHE_LINE_SIZE 64
+
 #define apedsa_da_temp(da) (apedsa_da_header(da)->temp)
 #define apedsa_da_header(da) ((ApedsaDaHeader *)(da) - 1)
 #define apedsa_da_cap(da) ((da) ? apedsa_da_header(da)->capacity : 0)
 #define apedsa_da_count(da) ((da) ? apedsa_da_header(da)->count : 0)
-/// Push x onto da, resizing da if necessary
 #define apedsa_da_put(da, x) (apedsa_da_reserve(da, 1), (da)[apedsa_da_header(da)->count++] = (x))
 #define apedsa_da_push apedsa_da_put
 #define apedsa_da_last(da) ((da)[apedsa_da_header(da)->count - 1])
@@ -184,8 +186,9 @@ extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_
 typedef struct {
 	size_t capacity;
 	size_t count;
-	void *hash_table;
-	ptrdiff_t temp; // stores temporary index for hashmap
+	void *aux;	// a pointer to either a hashmap or a btree (depending on type)
+	ptrdiff_t temp; // stores temporary values for hashmap and btree
+	enum { APEDSA_TYPE_HASHMAP, APEDSA_TYPE_BTREE } type;
 } ApedsaDaHeader;
 
 typedef struct ApedsaStringBlock {
@@ -203,23 +206,33 @@ enum {
 	APEDSA_HASHMAP_MODE_BINARY,
 	APEDSA_HASHMAP_MODE_STRING,
 };
+enum {
+	APEDSA_BTREE_MODE_BINARY,
+	APEDSA_BTREE_MODE_STRING,
+};
 
+// These wrappers allow us to work in C++ as well
 #ifdef __cplusplus
-template <typename T> static T *__apedsa_da_growf_wrapper(T *da, size_t esz, size_t growby, size_t min_cap) {
+template <typename T> static T *__apedsa_da_growf_wrapper(T *da, size_t esz, size_t growby, size_t min_cap)
+{
 	return (T *)__apedsa_da_growf((void *)da, esz, growby, min_cap);
 }
-template <typename T> static T *__apedsa_hashmap_put_internal_wrapper(T *hashmap, void *key, size_t key_size, size_t kv_size, int mode) {
+template <typename T> static T *__apedsa_hashmap_put_internal_wrapper(T *hashmap, void *key, size_t key_size, size_t kv_size, int mode)
+{
 	return (T *)__apedsa_hashmap_put_internal((void *)hashmap, key, key_size, kv_size, mode);
 }
-template <typename T> static T *__apedsa_hashmap_get_internal_wrapper(T *hashmap, void *key, size_t key_size, size_t kv_size, int mode) {
+template <typename T> static T *__apedsa_hashmap_get_internal_wrapper(T *hashmap, void *key, size_t key_size, size_t kv_size, int mode)
+{
 	return (T *)__apedsa_hashmap_get_internal((void *)hashmap, key, key_size, kv_size, mode);
 }
 template <typename T>
-static T *__apedsa_hashmap_del_internal_wrapper(T *hashmap, void *key, size_t key_size, size_t kv_size, size_t koff, int mode) {
+static T *__apedsa_hashmap_del_internal_wrapper(T *hashmap, void *key, size_t key_size, size_t kv_size, size_t koff, int mode)
+{
 	return (T *)__apedsa_hashmap_del_internal((void *)hashmap, key, key_size, kv_size, koff, mode);
 }
 template <typename T>
-static T *__apedsa_hashmap_put_internal_batch_wrapper(T *hashmap, size_t count, void *pairs, size_t key_size, size_t kv_size, int mode) {
+static T *__apedsa_hashmap_put_internal_batch_wrapper(T *hashmap, size_t count, void *pairs, size_t key_size, size_t kv_size, int mode)
+{
 	return (T *)__apedsa_hashmap_put_internal_batch((void *)hashmap, count, pairs, key_size, kv_size, mode);
 }
 #else

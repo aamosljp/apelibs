@@ -18,12 +18,62 @@ Sample code for dynamic array usage:
 
 Dynamic array usage:
   apedsa_da_count - Returns the number of elements in da as an unsigned integer
+  apedsa_da_cap - Returns the capacity of da
   apedsa_da_push - Pushes an element onto da
   apedsa_da_addn - Adds n uninitialized values to da
   apedsa_da_last - Returns the last element in da
   apedsa_da_insert - Inserts an element at index i
-  apedsa_da_delte - Deletes an element at index i
+  apedsa_da_delete - Deletes an element at index i
   apedsa_da_delete_swap - Deletes an element at index i and replaces it with the last element
-  apedsa_da_cap - Returns the capacity of da
   apedsa_da_reserve - Reserves space for n elements in da
+
+**** Hashmap ****
+
+Sample code for hashmaps:
+
+  int main(void) {
+      struct kv { int key; int value; };
+      struct kv *hm = NULL;
+      apedsa_hm_put(hm, 111, 42);
+      apedsa_hm_put(hm, 814, 11);
+      apedsa_hm_put(hm, 420, 1337);
+      printf("%d\n", apedsa_hm_get(hm, 420)); // should print "1337"
+      for (int i = 0; i < apedsa_hm_len(hm), i++) {
+          printf("%d: %d\n", hm[i].key, hm[i].value); // Can be indexed directly!
+      } // This loop should print the following:
+      // 111: 42
+      // 814: 11
+      // 420: 1337
+      apedsa_hm_del(hm, 111);
+      for (int i = 0; i < apedsa_hm_len(hm), i++) {
+          printf("%d: %d\n", hm[i].key, hm[i].value);
+      } // This loop should print the following:
+      // 420: 1337
+      // 814: 11
+      // NOTE: Deletions don't preserve order
+  }
+
+Hashmap usage:
+  apedsa_hm_len - Returns the number of elements in hm as an unsigned integer
+  apedsa_hm_put - Insert value at key in hashmap
+  apedsa_hm_get - Get value at key in hashmap
+  apedsa_hm_del - Delete value at key in hashmap
+  apedsa_hm_puts - Insert key-value pair (format: (struct pair){.key=key, .value=value})
+  apedsa_hm_geti - Get index of key
+  apedsa_hm_getp - Get pointer to key-value pair
+  apedsa_hm_gets - Get key-value pair
+  apedsa_hm_with_cap - Initialize hashmap with capacity (slightly reduces allocations on large hashmaps)
+  apedsa_hm_put_batch - Batch insert key-value pairs from array into hashmap
+
+For string-like keys (null-terminated), we provide a separate set of functions:
+  apedsa_shm_len
+  apedsa_shm_put
+  apedsa_shm_get
+  apedsa_shm_del
+  apedsa_shm_puts
+  apedsa_shm_geti
+  apedsa_shm_getp
+  apedsa_shm_gets
+  apedsa_shm_with_cap
+  apedsa_shm_put_batch
 

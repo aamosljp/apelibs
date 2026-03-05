@@ -27,7 +27,8 @@
 #endif
 #include "apebuild.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 	/* Auto-rebuild this build script if it changes */
 	APE_REBUILD(argc, argv);
 

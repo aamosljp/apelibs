@@ -17,7 +17,8 @@ static int tests_failed = 0;
 
 #define TEST(name)                                                             \
 	static int test_##name(void);                                          \
-	static void run_test_##name(void) {                                    \
+	static void run_test_##name(void)                                      \
+	{                                                                      \
 		tests_run++;                                                   \
 		if (test_##name() == FAILED) {                                 \
 			tests_failed++;                                        \
@@ -51,7 +52,8 @@ static int tests_failed = 0;
  * String Module Tests
  * ============================================================================ */
 
-TEST(str_dup) {
+TEST(str_dup)
+{
 	char *s = ape_str_dup("hello");
 	ASSERT_NOT_NULL(s);
 	ASSERT_STR_EQ(s, "hello");
@@ -59,7 +61,8 @@ TEST(str_dup) {
 	return PASSED;
 }
 
-TEST(str_ndup) {
+TEST(str_ndup)
+{
 	char *s = ape_str_ndup("hello world", 5);
 	ASSERT_NOT_NULL(s);
 	ASSERT_STR_EQ(s, "hello");
@@ -67,7 +70,8 @@ TEST(str_ndup) {
 	return PASSED;
 }
 
-TEST(str_concat) {
+TEST(str_concat)
+{
 	char *s = ape_str_concat("hello", " world");
 	ASSERT_NOT_NULL(s);
 	ASSERT_STR_EQ(s, "hello world");
@@ -75,7 +79,8 @@ TEST(str_concat) {
 	return PASSED;
 }
 
-TEST(str_eq) {
+TEST(str_eq)
+{
 	ASSERT(ape_str_eq("hello", "hello"));
 	ASSERT(!ape_str_eq("hello", "world"));
 	ASSERT(!ape_str_eq("hello", NULL));
@@ -84,41 +89,47 @@ TEST(str_eq) {
 	return PASSED;
 }
 
-TEST(str_eq_nocase) {
+TEST(str_eq_nocase)
+{
 	ASSERT(ape_str_eq_nocase("Hello", "hello"));
 	ASSERT(ape_str_eq_nocase("HELLO", "hello"));
 	ASSERT(!ape_str_eq_nocase("hello", "world"));
 	return PASSED;
 }
 
-TEST(str_starts_with) {
+TEST(str_starts_with)
+{
 	ASSERT(ape_str_starts_with("hello world", "hello"));
 	ASSERT(!ape_str_starts_with("hello world", "world"));
 	ASSERT(ape_str_starts_with("hello", ""));
 	return PASSED;
 }
 
-TEST(str_ends_with) {
+TEST(str_ends_with)
+{
 	ASSERT(ape_str_ends_with("hello world", "world"));
 	ASSERT(!ape_str_ends_with("hello world", "hello"));
 	ASSERT(ape_str_ends_with("hello", ""));
 	return PASSED;
 }
 
-TEST(str_contains) {
+TEST(str_contains)
+{
 	ASSERT(ape_str_contains("hello world", "lo wo"));
 	ASSERT(!ape_str_contains("hello world", "xyz"));
 	return PASSED;
 }
 
-TEST(str_is_empty) {
+TEST(str_is_empty)
+{
 	ASSERT(ape_str_is_empty(NULL));
 	ASSERT(ape_str_is_empty(""));
 	ASSERT(!ape_str_is_empty("hello"));
 	return PASSED;
 }
 
-TEST(str_trim) {
+TEST(str_trim)
+{
 	char *s = ape_str_trim("  hello world  ");
 	ASSERT_STR_EQ(s, "hello world");
 	APEBUILD_FREE(s);
@@ -129,46 +140,53 @@ TEST(str_trim) {
 	return PASSED;
 }
 
-TEST(str_to_lower) {
+TEST(str_to_lower)
+{
 	char *s = ape_str_to_lower("Hello World");
 	ASSERT_STR_EQ(s, "hello world");
 	APEBUILD_FREE(s);
 	return PASSED;
 }
 
-TEST(str_to_upper) {
+TEST(str_to_upper)
+{
 	char *s = ape_str_to_upper("Hello World");
 	ASSERT_STR_EQ(s, "HELLO WORLD");
 	APEBUILD_FREE(s);
 	return PASSED;
 }
 
-TEST(str_replace) {
+TEST(str_replace)
+{
 	char *s = ape_str_replace("hello world", "world", "there");
 	ASSERT_STR_EQ(s, "hello there");
 	APEBUILD_FREE(s);
 	return PASSED;
 }
 
-TEST(str_replace_all) {
+TEST(str_replace_all)
+{
 	char *s = ape_str_replace_all("hello hello hello", "hello", "hi");
 	ASSERT_STR_EQ(s, "hi hi hi");
 	APEBUILD_FREE(s);
 	return PASSED;
 }
 
-TEST(str_find) {
+TEST(str_find)
+{
 	ASSERT_EQ(ape_str_find("hello world", "world"), 6);
 	ASSERT_EQ(ape_str_find("hello world", "xyz"), -1);
 	return PASSED;
 }
 
-TEST(str_rfind) {
+TEST(str_rfind)
+{
 	ASSERT_EQ(ape_str_rfind("hello hello", "hello"), 6);
 	return PASSED;
 }
 
-TEST(str_split) {
+TEST(str_split)
+{
 	ApeStrList list = ape_str_split("a,b,c", ",");
 	ASSERT_EQ(ape_sl_len(&list), 3);
 	ASSERT_STR_EQ(ape_sl_get(&list, 0), "a");
@@ -178,7 +196,8 @@ TEST(str_split) {
 	return PASSED;
 }
 
-TEST(str_to_int) {
+TEST(str_to_int)
+{
 	int val;
 	ASSERT(ape_str_to_int("123", &val));
 	ASSERT_EQ(val, 123);
@@ -195,7 +214,8 @@ TEST(str_to_int) {
  * String Builder Tests
  * ============================================================================ */
 
-TEST(sb_basic) {
+TEST(sb_basic)
+{
 	ApeStrBuilder sb = ape_sb_new();
 	ape_sb_append_str(&sb, "hello");
 	ape_sb_append_char(&sb, ' ');
@@ -209,7 +229,8 @@ TEST(sb_basic) {
 	return PASSED;
 }
 
-TEST(sb_fmt) {
+TEST(sb_fmt)
+{
 	ApeStrBuilder sb = ape_sb_new();
 	ape_sb_append_fmt(&sb, "value: %d", 42);
 
@@ -220,7 +241,8 @@ TEST(sb_fmt) {
 	return PASSED;
 }
 
-TEST(sb_prepend) {
+TEST(sb_prepend)
+{
 	ApeStrBuilder sb = ape_sb_new();
 	ape_sb_append_str(&sb, "world");
 	ape_sb_prepend_str(&sb, "hello ");
@@ -236,7 +258,8 @@ TEST(sb_prepend) {
  * String List Tests
  * ============================================================================ */
 
-TEST(sl_basic) {
+TEST(sl_basic)
+{
 	ApeStrList sl = ape_sl_new();
 	ape_sl_append_dup(&sl, "first");
 	ape_sl_append_dup(&sl, "second");
@@ -251,7 +274,8 @@ TEST(sl_basic) {
 	return PASSED;
 }
 
-TEST(sl_join) {
+TEST(sl_join)
+{
 	ApeStrList sl = ape_sl_new();
 	ape_sl_append_dup(&sl, "a");
 	ape_sl_append_dup(&sl, "b");
@@ -265,7 +289,8 @@ TEST(sl_join) {
 	return PASSED;
 }
 
-TEST(sl_contains) {
+TEST(sl_contains)
+{
 	ApeStrList sl = ape_sl_new();
 	ape_sl_append_dup(&sl, "apple");
 	ape_sl_append_dup(&sl, "banana");
@@ -278,7 +303,8 @@ TEST(sl_contains) {
 	return PASSED;
 }
 
-TEST(sl_remove) {
+TEST(sl_remove)
+{
 	ApeStrList sl = ape_sl_new();
 	ape_sl_append_dup(&sl, "a");
 	ape_sl_append_dup(&sl, "b");
@@ -298,7 +324,8 @@ TEST(sl_remove) {
  * Filesystem Tests
  * ============================================================================ */
 
-TEST(fs_join) {
+TEST(fs_join)
+{
 	char *path = ape_fs_join("/home", "user");
 	ASSERT_STR_EQ(path, "/home/user");
 	APEBUILD_FREE(path);
@@ -313,7 +340,8 @@ TEST(fs_join) {
 	return PASSED;
 }
 
-TEST(fs_dirname) {
+TEST(fs_dirname)
+{
 	char *dir = ape_fs_dirname("/home/user/file.txt");
 	ASSERT_STR_EQ(dir, "/home/user");
 	APEBUILD_FREE(dir);
@@ -328,7 +356,8 @@ TEST(fs_dirname) {
 	return PASSED;
 }
 
-TEST(fs_basename) {
+TEST(fs_basename)
+{
 	char *base = ape_fs_basename("/home/user/file.txt");
 	ASSERT_STR_EQ(base, "file.txt");
 	APEBUILD_FREE(base);
@@ -339,7 +368,8 @@ TEST(fs_basename) {
 	return PASSED;
 }
 
-TEST(fs_extension) {
+TEST(fs_extension)
+{
 	char *ext = ape_fs_extension("/home/user/file.txt");
 	ASSERT_STR_EQ(ext, ".txt");
 	APEBUILD_FREE(ext);
@@ -354,7 +384,8 @@ TEST(fs_extension) {
 	return PASSED;
 }
 
-TEST(fs_stem) {
+TEST(fs_stem)
+{
 	char *stem = ape_fs_stem("/home/user/file.txt");
 	ASSERT_STR_EQ(stem, "file");
 	APEBUILD_FREE(stem);
@@ -365,7 +396,8 @@ TEST(fs_stem) {
 	return PASSED;
 }
 
-TEST(fs_change_extension) {
+TEST(fs_change_extension)
+{
 	char *path = ape_fs_change_extension("file.c", ".o");
 	ASSERT_STR_EQ(path, "file.o");
 	APEBUILD_FREE(path);
@@ -376,7 +408,8 @@ TEST(fs_change_extension) {
 	return PASSED;
 }
 
-TEST(fs_normalize) {
+TEST(fs_normalize)
+{
 	char *path = ape_fs_normalize("/home/user/../user/./file.txt");
 	ASSERT_STR_EQ(path, "/home/user/file.txt");
 	APEBUILD_FREE(path);
@@ -387,25 +420,29 @@ TEST(fs_normalize) {
 	return PASSED;
 }
 
-TEST(fs_is_absolute) {
+TEST(fs_is_absolute)
+{
 	ASSERT(ape_fs_is_absolute("/home/user"));
 	ASSERT(!ape_fs_is_absolute("home/user"));
 	ASSERT(!ape_fs_is_absolute("./file"));
 	return PASSED;
 }
 
-TEST(fs_exists) {
+TEST(fs_exists)
+{
 	ASSERT(ape_fs_exists("/tmp"));
 	ASSERT(!ape_fs_exists("/nonexistent/path/that/should/not/exist"));
 	return PASSED;
 }
 
-TEST(fs_is_dir) {
+TEST(fs_is_dir)
+{
 	ASSERT(ape_fs_is_dir("/tmp"));
 	return PASSED;
 }
 
-TEST(fs_write_read) {
+TEST(fs_write_read)
+{
 	char *tmpfile = ape_fs_temp_file("test");
 	ASSERT_NOT_NULL(tmpfile);
 
@@ -424,7 +461,8 @@ TEST(fs_write_read) {
 	return PASSED;
 }
 
-TEST(fs_needs_rebuild) {
+TEST(fs_needs_rebuild)
+{
 	/* Create two temp files */
 	char *file1 = ape_fs_temp_file("test1");
 	char *file2 = ape_fs_temp_file("test2");
@@ -450,7 +488,8 @@ TEST(fs_needs_rebuild) {
  * Command Module Tests
  * ============================================================================ */
 
-TEST(cmd_basic) {
+TEST(cmd_basic)
+{
 	ApeCmd cmd = ape_cmd_new();
 	ape_cmd_append(&cmd, "echo");
 	ape_cmd_append(&cmd, "hello");
@@ -463,7 +502,8 @@ TEST(cmd_basic) {
 	return PASSED;
 }
 
-TEST(cmd_from) {
+TEST(cmd_from)
+{
 	ApeCmd cmd = ape_cmd_from("gcc");
 	ape_cmd_append(&cmd, "-c");
 	ape_cmd_append(&cmd, "file.c");
@@ -475,7 +515,8 @@ TEST(cmd_from) {
 	return PASSED;
 }
 
-TEST(cmd_render) {
+TEST(cmd_render)
+{
 	ApeCmd cmd = ape_cmd_new();
 	ape_cmd_append(&cmd, "gcc");
 	ape_cmd_append(&cmd, "-o");
@@ -490,7 +531,8 @@ TEST(cmd_render) {
 	return PASSED;
 }
 
-TEST(cmd_run) {
+TEST(cmd_run)
+{
 	ApeCmd cmd = ape_cmd_from("true");
 	ASSERT(ape_cmd_run(&cmd));
 	ape_cmd_free(&cmd);
@@ -501,7 +543,8 @@ TEST(cmd_run) {
 	return PASSED;
 }
 
-TEST(cmd_run_capture) {
+TEST(cmd_run_capture)
+{
 	ApeCmd cmd = ape_cmd_from("echo");
 	ape_cmd_append(&cmd, "hello");
 
@@ -517,7 +560,8 @@ TEST(cmd_run_capture) {
 	return PASSED;
 }
 
-TEST(cmd_async) {
+TEST(cmd_async)
+{
 	ApeCmd cmd = ape_cmd_from("sleep");
 	ape_cmd_append(&cmd, "0.1");
 
@@ -540,7 +584,8 @@ TEST(cmd_async) {
 	return PASSED;
 }
 
-TEST(cmd_cwd) {
+TEST(cmd_cwd)
+{
 	ApeCmd cmd = ape_cmd_from("pwd");
 	ape_cmd_set_cwd(&cmd, "/tmp");
 
@@ -559,13 +604,15 @@ TEST(cmd_cwd) {
  * Logging Module Tests
  * ============================================================================ */
 
-TEST(log_level_name) {
+TEST(log_level_name)
+{
 	ASSERT_STR_EQ(ape_log_level_name(APE_LOG_INFO), "INFO");
 	ASSERT_STR_EQ(ape_log_level_name(APE_LOG_ERROR), "ERROR");
 	return PASSED;
 }
 
-TEST(log_level_from_name) {
+TEST(log_level_from_name)
+{
 	ApeLogLevel level;
 	ASSERT(ape_log_level_from_name("info", &level));
 	ASSERT_EQ(level, APE_LOG_INFO);
@@ -577,7 +624,8 @@ TEST(log_level_from_name) {
 	return PASSED;
 }
 
-TEST(log_set_level) {
+TEST(log_set_level)
+{
 	ape_log_init();
 
 	ApeLogLevel old = ape_log_get_level();
@@ -593,7 +641,8 @@ TEST(log_set_level) {
  * Emscripten/WASM Toolchain Tests
  * ============================================================================ */
 
-TEST(emcc_toolchain_creation) {
+TEST(emcc_toolchain_creation)
+{
 	ape_build_reset();
 	ApeToolchainHandle tc = ape_toolchain_emcc();
 	ASSERT_NE(tc, APE_INVALID_TOOLCHAIN);
@@ -614,7 +663,8 @@ TEST(emcc_toolchain_creation) {
 	return PASSED;
 }
 
-TEST(emcc_builder_wasm_output_path) {
+TEST(emcc_builder_wasm_output_path)
+{
 	ape_build_reset();
 	ApeToolchainHandle tc = ape_toolchain_emcc();
 	ApeBuilderHandle builder = ape_builder_new("myapp");
@@ -639,7 +689,8 @@ TEST(emcc_builder_wasm_output_path) {
 	return PASSED;
 }
 
-TEST(emcc_builder_shell_file) {
+TEST(emcc_builder_shell_file)
+{
 	ape_build_reset();
 	ApeBuilderHandle builder = ape_builder_new("myapp");
 
@@ -657,7 +708,8 @@ TEST(emcc_builder_shell_file) {
 	return PASSED;
 }
 
-TEST(emcc_builder_exported_functions) {
+TEST(emcc_builder_exported_functions)
+{
 	ape_build_reset();
 	ApeBuilderHandle builder = ape_builder_new("myapp");
 
@@ -674,7 +726,8 @@ TEST(emcc_builder_exported_functions) {
 	return PASSED;
 }
 
-TEST(emcc_builder_preload_embed_files) {
+TEST(emcc_builder_preload_embed_files)
+{
 	ape_build_reset();
 	ApeBuilderHandle builder = ape_builder_new("myapp");
 
@@ -694,7 +747,8 @@ TEST(emcc_builder_preload_embed_files) {
 	return PASSED;
 }
 
-TEST(emcc_builder_memory_settings) {
+TEST(emcc_builder_memory_settings)
+{
 	ape_build_reset();
 	ApeBuilderHandle builder = ape_builder_new("myapp");
 
@@ -713,7 +767,8 @@ TEST(emcc_builder_memory_settings) {
 	return PASSED;
 }
 
-TEST(emcc_default_shell) {
+TEST(emcc_default_shell)
+{
 	const char *shell = ape_emcc_default_shell();
 	ASSERT_NOT_NULL(shell);
 
@@ -726,7 +781,8 @@ TEST(emcc_default_shell) {
 	return PASSED;
 }
 
-TEST(emcc_task_generation) {
+TEST(emcc_task_generation)
+{
 	ape_build_reset();
 	ApeToolchainHandle tc = ape_toolchain_emcc();
 	ApeBuilderHandle builder = ape_builder_new("myapp");
@@ -786,7 +842,8 @@ TEST(emcc_task_generation) {
 	return PASSED;
 }
 
-TEST(emcc_custom_shell_file) {
+TEST(emcc_custom_shell_file)
+{
 	ape_build_reset();
 	ApeToolchainHandle tc = ape_toolchain_emcc();
 	ApeBuilderHandle builder = ape_builder_new("myapp");
@@ -815,7 +872,8 @@ TEST(emcc_custom_shell_file) {
 	return PASSED;
 }
 
-TEST(emcc_js_only_output) {
+TEST(emcc_js_only_output)
+{
 	ape_build_reset();
 	ApeToolchainHandle tc = ape_toolchain_emcc();
 	ApeBuilderHandle builder = ape_builder_new("myapp");
@@ -847,7 +905,8 @@ TEST(emcc_js_only_output) {
  * Test Runner
  * ============================================================================ */
 
-static void run_string_tests(void) {
+static void run_string_tests(void)
+{
 	printf("String module tests:\n");
 	RUN_TEST(str_dup);
 	RUN_TEST(str_ndup);
@@ -870,7 +929,8 @@ static void run_string_tests(void) {
 	printf("\n");
 }
 
-static void run_sb_tests(void) {
+static void run_sb_tests(void)
+{
 	printf("String builder tests:\n");
 	RUN_TEST(sb_basic);
 	RUN_TEST(sb_fmt);
@@ -878,7 +938,8 @@ static void run_sb_tests(void) {
 	printf("\n");
 }
 
-static void run_sl_tests(void) {
+static void run_sl_tests(void)
+{
 	printf("String list tests:\n");
 	RUN_TEST(sl_basic);
 	RUN_TEST(sl_join);
@@ -887,7 +948,8 @@ static void run_sl_tests(void) {
 	printf("\n");
 }
 
-static void run_fs_tests(void) {
+static void run_fs_tests(void)
+{
 	printf("Filesystem module tests:\n");
 	RUN_TEST(fs_join);
 	RUN_TEST(fs_dirname);
@@ -904,7 +966,8 @@ static void run_fs_tests(void) {
 	printf("\n");
 }
 
-static void run_cmd_tests(void) {
+static void run_cmd_tests(void)
+{
 	printf("Command module tests:\n");
 	RUN_TEST(cmd_basic);
 	RUN_TEST(cmd_from);
@@ -916,7 +979,8 @@ static void run_cmd_tests(void) {
 	printf("\n");
 }
 
-static void run_log_tests(void) {
+static void run_log_tests(void)
+{
 	printf("Logging module tests:\n");
 	RUN_TEST(log_level_name);
 	RUN_TEST(log_level_from_name);
@@ -924,7 +988,8 @@ static void run_log_tests(void) {
 	printf("\n");
 }
 
-static void run_emcc_tests(void) {
+static void run_emcc_tests(void)
+{
 	printf("Emscripten/WASM toolchain tests:\n");
 	RUN_TEST(emcc_toolchain_creation);
 	RUN_TEST(emcc_builder_wasm_output_path);
@@ -939,7 +1004,8 @@ static void run_emcc_tests(void) {
 	printf("\n");
 }
 
-int main(void) {
+int main(void)
+{
 	ape_log_init();
 	ape_log_set_level(APE_LOG_TRACE);
 	ape_log_info("Apebuild Unit Tests");

@@ -6,7 +6,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-TEST(da_push_one) {
+TEST(da_push_one)
+{
 	int *arr = NULL;
 	apedsa_da_push(arr, 1);
 	ASSERT_EQ(apedsa_da_count(arr), 1);
@@ -14,81 +15,121 @@ TEST(da_push_one) {
 	return PASSED;
 }
 
-TEST(da_push_many) {
+TEST(da_push_many)
+{
 	int *arr = NULL;
-	for (int i = 0; i < 100; i++) { apedsa_da_push(arr, i); }
+	for (int i = 0; i < 100; i++) {
+		apedsa_da_push(arr, i);
+	}
 	ASSERT_EQ(apedsa_da_count(arr), 100);
 	ASSERT_GE(apedsa_da_cap(arr), 100);
-	for (int i = 0; i < 100; i++) { ASSERT_EQ(arr[i], i); }
+	for (int i = 0; i < 100; i++) {
+		ASSERT_EQ(arr[i], i);
+	}
 	return PASSED;
 }
 
-TEST(da_insert_first) {
+TEST(da_insert_first)
+{
 	int *arr = NULL;
-	for (int i = 0; i < 100; i++) { apedsa_da_push(arr, i); }
+	for (int i = 0; i < 100; i++) {
+		apedsa_da_push(arr, i);
+	}
 	ASSERT_EQ(apedsa_da_count(arr), 100);
 	apedsa_da_insert(arr, 0, 200);
 	ASSERT_EQ(apedsa_da_count(arr), 101);
 	ASSERT_EQ(arr[0], 200);
-	for (int i = 1; i < 101; i++) { ASSERT_EQ(arr[i], i - 1); }
+	for (int i = 1; i < 101; i++) {
+		ASSERT_EQ(arr[i], i - 1);
+	}
 	return PASSED;
 }
 
-TEST(da_insert_last) {
+TEST(da_insert_last)
+{
 	int *arr = NULL;
-	for (int i = 0; i < 100; i++) { apedsa_da_push(arr, i); }
+	for (int i = 0; i < 100; i++) {
+		apedsa_da_push(arr, i);
+	}
 	ASSERT_EQ(apedsa_da_count(arr), 100);
 	apedsa_da_insert(arr, 100, 200);
 	ASSERT_EQ(apedsa_da_count(arr), 101);
 	ASSERT_EQ(arr[100], 200);
-	for (int i = 0; i < 100; i++) { ASSERT_EQ(arr[i], i); }
+	for (int i = 0; i < 100; i++) {
+		ASSERT_EQ(arr[i], i);
+	}
 	return PASSED;
 }
 
-TEST(da_insert_middle) {
+TEST(da_insert_middle)
+{
 	int *arr = NULL;
-	for (int i = 0; i < 100; i++) { apedsa_da_push(arr, i); }
+	for (int i = 0; i < 100; i++) {
+		apedsa_da_push(arr, i);
+	}
 	ASSERT_EQ(apedsa_da_count(arr), 100);
 	apedsa_da_insert(arr, 50, 200);
 	ASSERT_EQ(apedsa_da_count(arr), 101);
 	ASSERT_EQ(arr[50], 200);
-	for (int i = 0; i < 50; i++) { ASSERT_EQ(arr[i], i); }
-	for (int i = 51; i < 101; i++) { ASSERT_EQ(arr[i], i - 1); }
+	for (int i = 0; i < 50; i++) {
+		ASSERT_EQ(arr[i], i);
+	}
+	for (int i = 51; i < 101; i++) {
+		ASSERT_EQ(arr[i], i - 1);
+	}
 	return PASSED;
 }
 
-TEST(da_delete_first) {
+TEST(da_delete_first)
+{
 	int *arr = NULL;
-	for (int i = 0; i < 100; i++) { apedsa_da_push(arr, i); }
+	for (int i = 0; i < 100; i++) {
+		apedsa_da_push(arr, i);
+	}
 	ASSERT_EQ(apedsa_da_count(arr), 100);
 	apedsa_da_delete(arr, 0);
 	ASSERT_EQ(apedsa_da_count(arr), 99);
-	for (int i = 0; i < 99; i++) { ASSERT_EQ(arr[i], i + 1); }
+	for (int i = 0; i < 99; i++) {
+		ASSERT_EQ(arr[i], i + 1);
+	}
 	return PASSED;
 }
 
-TEST(da_delete_last) {
+TEST(da_delete_last)
+{
 	int *arr = NULL;
-	for (int i = 0; i < 100; i++) { apedsa_da_push(arr, i); }
+	for (int i = 0; i < 100; i++) {
+		apedsa_da_push(arr, i);
+	}
 	ASSERT_EQ(apedsa_da_count(arr), 100);
 	apedsa_da_delete(arr, 99);
 	ASSERT_EQ(apedsa_da_count(arr), 99);
-	for (int i = 0; i < 99; i++) { ASSERT_EQ(arr[i], i); }
+	for (int i = 0; i < 99; i++) {
+		ASSERT_EQ(arr[i], i);
+	}
 	return PASSED;
 }
 
-TEST(da_delete_middle) {
+TEST(da_delete_middle)
+{
 	int *arr = NULL;
-	for (int i = 0; i < 100; i++) { apedsa_da_push(arr, i); }
+	for (int i = 0; i < 100; i++) {
+		apedsa_da_push(arr, i);
+	}
 	ASSERT_EQ(apedsa_da_count(arr), 100);
 	apedsa_da_delete(arr, 50);
 	ASSERT_EQ(apedsa_da_count(arr), 99);
-	for (int i = 0; i < 49; i++) { ASSERT_EQ(arr[i], i); }
-	for (int i = 50; i < 99; i++) { ASSERT_EQ(arr[i], i + 1); }
+	for (int i = 0; i < 49; i++) {
+		ASSERT_EQ(arr[i], i);
+	}
+	for (int i = 50; i < 99; i++) {
+		ASSERT_EQ(arr[i], i + 1);
+	}
 	return PASSED;
 }
 
-static void run_da_tests(void) {
+static void run_da_tests(void)
+{
 	LOG_INFO("DA tests:");
 	RUN_TEST(da_push_one);
 	RUN_TEST(da_push_many);
@@ -110,14 +151,16 @@ typedef struct {
 	int value;
 } Ki;
 
-TEST(hm_string_put_one) {
+TEST(hm_string_put_one)
+{
 	Kv *map = NULL;
 	apedsa_shm_put(map, "hello", 5);
 	ASSERT_EQ(apedsa_shm_get(map, "hello"), 5);
 	return PASSED;
 }
 
-TEST(hm_string_put_many) {
+TEST(hm_string_put_many)
+{
 	Kv *map = NULL;
 	for (int i = 0; i < 50; i++) {
 		char key[20];
@@ -132,7 +175,8 @@ TEST(hm_string_put_many) {
 	return PASSED;
 }
 
-TEST(hm_string_update_existing) {
+TEST(hm_string_update_existing)
+{
 	Kv *map = NULL;
 	apedsa_shm_put(map, "test", 100);
 	ASSERT_EQ(apedsa_shm_get(map, "test"), 100);
@@ -141,7 +185,8 @@ TEST(hm_string_update_existing) {
 	return PASSED;
 }
 
-TEST(hm_string_delete) {
+TEST(hm_string_delete)
+{
 	Kv *map = NULL;
 	apedsa_shm_put(map, "a", 1);
 	apedsa_shm_put(map, "b", 2);
@@ -157,7 +202,8 @@ TEST(hm_string_delete) {
 	return PASSED;
 }
 
-TEST(hm_string_delete_first) {
+TEST(hm_string_delete_first)
+{
 	Kv *map = NULL;
 	apedsa_shm_put(map, "a", 1);
 	apedsa_shm_put(map, "b", 2);
@@ -169,7 +215,8 @@ TEST(hm_string_delete_first) {
 	return PASSED;
 }
 
-TEST(hm_string_delete_last) {
+TEST(hm_string_delete_last)
+{
 	Kv *map = NULL;
 	apedsa_shm_put(map, "a", 1);
 	apedsa_shm_put(map, "b", 2);
@@ -181,20 +228,23 @@ TEST(hm_string_delete_last) {
 	return PASSED;
 }
 
-TEST(hm_string_nonexistent_key) {
+TEST(hm_string_nonexistent_key)
+{
 	Kv *map = NULL;
 	apedsa_shm_put(map, "exists", 42);
-	ASSERT_EQ(apedsa_shm_get(map, "notexists"), -1);
+	ASSERT_EQ(apedsa_shm_geti(map, "notexists"), -1);
 	return PASSED;
 }
 
-TEST(hm_string_empty_map) {
+TEST(hm_string_empty_map)
+{
 	Ki *map = NULL;
 	ASSERT_EQ(apedsa_hm_len(map), 0);
 	return PASSED;
 }
 
-TEST(hm_int_put_one) {
+TEST(hm_int_put_one)
+{
 	Ki *map = NULL;
 	int k = 42;
 	apedsa_hm_put(map, k, 100);
@@ -202,14 +252,20 @@ TEST(hm_int_put_one) {
 	return PASSED;
 }
 
-TEST(hm_int_put_many) {
+TEST(hm_int_put_many)
+{
 	Ki *map = NULL;
-	for (int i = 0; i < 100; i++) { apedsa_hm_put(map, i, i * 7); }
-	for (int i = 0; i < 100; i++) { ASSERT_EQ(apedsa_hm_get(map, i), i * 7); }
+	for (int i = 0; i < 100; i++) {
+		apedsa_hm_put(map, i, i * 7);
+	}
+	for (int i = 0; i < 100; i++) {
+		ASSERT_EQ(apedsa_hm_get(map, i), i * 7);
+	}
 	return PASSED;
 }
 
-TEST(hm_int_update_existing) {
+TEST(hm_int_update_existing)
+{
 	Ki *map = NULL;
 	int k = 10;
 	apedsa_hm_put(map, k, 50);
@@ -219,7 +275,8 @@ TEST(hm_int_update_existing) {
 	return PASSED;
 }
 
-TEST(hm_int_delete) {
+TEST(hm_int_delete)
+{
 	Ki *map = NULL;
 	int k;
 	k = 1, apedsa_hm_put(map, k, 10);
@@ -233,7 +290,8 @@ TEST(hm_int_delete) {
 	return PASSED;
 }
 
-TEST(hm_int_delete_first) {
+TEST(hm_int_delete_first)
+{
 	Ki *map = NULL;
 	int k;
 	k = 1, apedsa_hm_put(map, k, 10);
@@ -246,7 +304,8 @@ TEST(hm_int_delete_first) {
 	return PASSED;
 }
 
-TEST(hm_int_delete_last) {
+TEST(hm_int_delete_last)
+{
 	Ki *map = NULL;
 	int k;
 	k = 1, apedsa_hm_put(map, k, 10);
@@ -259,30 +318,38 @@ TEST(hm_int_delete_last) {
 	return PASSED;
 }
 
-TEST(hm_int_nonexistent_key) {
+TEST(hm_int_nonexistent_key)
+{
 	Ki *map = NULL;
 	int k = 100;
 	apedsa_hm_put(map, k, 999);
-	ASSERT_EQ((k = 999, apedsa_hm_get(map, k)), -1);
+	ASSERT_EQ((k = 999, apedsa_hm_geti(map, k)), -1);
 	return PASSED;
 }
 
-TEST(hm_int_empty_map) {
+TEST(hm_int_empty_map)
+{
 	Ki *map = NULL;
 	ASSERT_EQ(apedsa_hm_len(map), 0);
 	return PASSED;
 }
 
-TEST(hm_int_stress) {
+TEST(hm_int_stress)
+{
 	Ki *map = NULL;
 	int num_ops = 10000;
-	for (int i = 0; i < num_ops; i++) { apedsa_hm_put(map, i, i * 3); }
+	for (int i = 0; i < num_ops; i++) {
+		apedsa_hm_put(map, i, i * 3);
+	}
 	ASSERT_EQ(apedsa_hm_len(map), num_ops);
-	for (int i = 0; i < num_ops; i++) { ASSERT_EQ(apedsa_hm_get(map, i), i * 3); }
+	for (int i = 0; i < num_ops; i++) {
+		ASSERT_EQ(apedsa_hm_get(map, i), i * 3);
+	}
 	return PASSED;
 }
 
-TEST(hm_string_stress) {
+TEST(hm_string_stress)
+{
 	Kv *map = NULL;
 	int num_ops = 1000;
 	for (int i = 0; i < num_ops; i++) {
@@ -299,7 +366,8 @@ TEST(hm_string_stress) {
 	return PASSED;
 }
 
-TEST(hm_mixed_operations) {
+TEST(hm_mixed_operations)
+{
 	Ki *imap = NULL;
 	Kv *smap = NULL;
 	for (int i = 0; i < 25; i++) {
@@ -322,7 +390,8 @@ TEST(hm_mixed_operations) {
 	return PASSED;
 }
 
-TEST(hm_reinsert_after_delete) {
+TEST(hm_reinsert_after_delete)
+{
 	Ki *map = NULL;
 	int k;
 	k = 1, apedsa_hm_put(map, k, 100);
@@ -338,7 +407,8 @@ TEST(hm_reinsert_after_delete) {
 	return PASSED;
 }
 
-TEST(hm_put_batch) {
+TEST(hm_put_batch)
+{
 	Ki *map = NULL;
 	apedsa_hm_put_batch(map,
 			    ((Ki[]){
@@ -369,7 +439,8 @@ TEST(hm_put_batch) {
 	return PASSED;
 }
 
-TEST(shm_put_batch) {
+TEST(shm_put_batch)
+{
 	Kv *map = NULL;
 	Kv *da = NULL;
 	apedsa_da_put(da, ((Kv){ .key = "a", .value = 1 }));
@@ -403,14 +474,16 @@ typedef struct {
 	char *value;
 } Kvss;
 
-TEST(shm_string_values) {
+TEST(shm_string_values)
+{
 	Kvss *map = NULL;
 	apedsa_shm_put(map, "hello", "world");
 	ASSERT_STR_EQ(apedsa_shm_get(map, "hello"), "world");
 	return PASSED;
 }
 
-static void run_hm_tests(void) {
+static void run_hm_tests(void)
+{
 	LOG_INFO("HM tests:");
 	RUN_TEST(hm_string_put_one);
 	RUN_TEST(hm_string_put_many);
@@ -437,13 +510,16 @@ static void run_hm_tests(void) {
 	RUN_TEST(shm_string_values);
 }
 
-int main(void) {
+int main(void)
+{
 	LOG_INFO("Running tests...");
 	run_da_tests();
 	run_hm_tests();
 	LOG_INFO("Tests finished");
 	LOG_INFO("%d Total", tests_run);
-	if (tests_failed > 0) LOG_INFO("%d \x1b[31mFAILED\x1b[0m", tests_failed);
-	if (tests_passed > 0) LOG_INFO("%d \x1b[32mPASSED\x1b[0m", tests_passed);
+	if (tests_failed > 0)
+		LOG_INFO("%d \x1b[31mFAILED\x1b[0m", tests_failed);
+	if (tests_passed > 0)
+		LOG_INFO("%d \x1b[32mPASSED\x1b[0m", tests_passed);
 	return tests_failed > 0 ? 1 : 0;
 }

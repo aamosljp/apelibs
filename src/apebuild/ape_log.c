@@ -42,8 +42,10 @@ APEBUILD_PRIVATE const char *ape_log_level_names[] = { "TRACE", "DEBUG", "INFO",
  * Initialization
  * ============================================================================ */
 
-APEBUILD_DEF void ape_log_init(void) {
-	if (ape_log_initialized) return;
+APEBUILD_DEF void ape_log_init(void)
+{
+	if (ape_log_initialized)
+		return;
 
 	ape_log_config.output = stderr;
 
@@ -62,7 +64,8 @@ APEBUILD_DEF void ape_log_init(void) {
 	ape_log_initialized = 1;
 }
 
-APEBUILD_DEF void ape_log_shutdown(void) {
+APEBUILD_DEF void ape_log_shutdown(void)
+{
 	if (ape_log_config.file_output) {
 		fclose(ape_log_config.file_output);
 		ape_log_config.file_output = NULL;
@@ -74,35 +77,62 @@ APEBUILD_DEF void ape_log_shutdown(void) {
  * Configuration
  * ============================================================================ */
 
-APEBUILD_DEF void ape_log_set_level(ApeLogLevel level) { ape_log_config.level = level; }
+APEBUILD_DEF void ape_log_set_level(ApeLogLevel level)
+{
+	ape_log_config.level = level;
+}
 
-APEBUILD_DEF ApeLogLevel ape_log_get_level(void) { return ape_log_config.level; }
+APEBUILD_DEF ApeLogLevel ape_log_get_level(void)
+{
+	return ape_log_config.level;
+}
 
-APEBUILD_DEF void ape_log_set_output(FILE *fp) { ape_log_config.output = fp; }
+APEBUILD_DEF void ape_log_set_output(FILE *fp)
+{
+	ape_log_config.output = fp;
+}
 
-APEBUILD_DEF int ape_log_set_file(const char *path) {
+APEBUILD_DEF int ape_log_set_file(const char *path)
+{
 	if (ape_log_config.file_output) {
 		fclose(ape_log_config.file_output);
 		ape_log_config.file_output = NULL;
 	}
 
-	if (!path) return APEBUILD_TRUE;
+	if (!path)
+		return APEBUILD_TRUE;
 
 	ape_log_config.file_output = fopen(path, "a");
 	return ape_log_config.file_output != NULL ? APEBUILD_TRUE : APEBUILD_FALSE;
 }
 
-APEBUILD_DEF void ape_log_set_colors(int enabled) { ape_log_config.use_colors = enabled; }
+APEBUILD_DEF void ape_log_set_colors(int enabled)
+{
+	ape_log_config.use_colors = enabled;
+}
 
-APEBUILD_DEF void ape_log_set_timestamps(int enabled) { ape_log_config.show_timestamps = enabled; }
+APEBUILD_DEF void ape_log_set_timestamps(int enabled)
+{
+	ape_log_config.show_timestamps = enabled;
+}
 
-APEBUILD_DEF void ape_log_set_show_level(int enabled) { ape_log_config.show_level = enabled; }
+APEBUILD_DEF void ape_log_set_show_level(int enabled)
+{
+	ape_log_config.show_level = enabled;
+}
 
-APEBUILD_DEF void ape_log_set_show_file(int enabled) { ape_log_config.show_file = enabled; }
+APEBUILD_DEF void ape_log_set_show_file(int enabled)
+{
+	ape_log_config.show_file = enabled;
+}
 
-APEBUILD_DEF void ape_log_set_prefix(const char *prefix) { ape_log_config.prefix = prefix; }
+APEBUILD_DEF void ape_log_set_prefix(const char *prefix)
+{
+	ape_log_config.prefix = prefix;
+}
 
-APEBUILD_DEF void ape_log_set_quiet(int quiet) {
+APEBUILD_DEF void ape_log_set_quiet(int quiet)
+{
 	if (quiet) {
 		ape_log_config.output = NULL;
 	} else {
@@ -115,7 +145,8 @@ APEBUILD_DEF void ape_log_set_quiet(int quiet) {
  * ============================================================================ */
 
 APEBUILD_PRIVATE void ape_log_write_to_file(FILE *fp, ApeLogLevel level, const char *file, int line, const char *fmt, va_list args,
-					    int use_colors) {
+					    int use_colors)
+{
 	/* Timestamp */
 	if (ape_log_config.show_timestamps) {
 		time_t now = time(NULL);
@@ -126,7 +157,9 @@ APEBUILD_PRIVATE void ape_log_write_to_file(FILE *fp, ApeLogLevel level, const c
 	}
 
 	/* Prefix */
-	if (ape_log_config.prefix) { fprintf(fp, "%s", ape_log_config.prefix); }
+	if (ape_log_config.prefix) {
+		fprintf(fp, "%s", ape_log_config.prefix);
+	}
 
 	/* Level */
 	if (ape_log_config.show_level) {
@@ -142,7 +175,8 @@ APEBUILD_PRIVATE void ape_log_write_to_file(FILE *fp, ApeLogLevel level, const c
 		/* Extract just the filename */
 		const char *filename = file;
 		const char *slash = strrchr(file, '/');
-		if (slash) filename = slash + 1;
+		if (slash)
+			filename = slash + 1;
 		fprintf(fp, "%s:%d: ", filename, line);
 	}
 
@@ -151,10 +185,13 @@ APEBUILD_PRIVATE void ape_log_write_to_file(FILE *fp, ApeLogLevel level, const c
 	fprintf(fp, "\n");
 }
 
-APEBUILD_DEF void ape_log_writev(ApeLogLevel level, const char *file, int line, const char *fmt, va_list args) {
-	if (!ape_log_initialized) ape_log_init();
+APEBUILD_DEF void ape_log_writev(ApeLogLevel level, const char *file, int line, const char *fmt, va_list args)
+{
+	if (!ape_log_initialized)
+		ape_log_init();
 
-	if (level < ape_log_config.level) return;
+	if (level < ape_log_config.level)
+		return;
 
 	/* Write to main output */
 	if (ape_log_config.output) {
@@ -173,7 +210,8 @@ APEBUILD_DEF void ape_log_writev(ApeLogLevel level, const char *file, int line, 
 	}
 }
 
-APEBUILD_DEF void ape_log_write(ApeLogLevel level, const char *file, int line, const char *fmt, ...) {
+APEBUILD_DEF void ape_log_write(ApeLogLevel level, const char *file, int line, const char *fmt, ...)
+{
 	va_list args;
 	va_start(args, fmt);
 	ape_log_writev(level, file, line, fmt, args);
@@ -184,13 +222,17 @@ APEBUILD_DEF void ape_log_write(ApeLogLevel level, const char *file, int line, c
  * Utility Functions
  * ============================================================================ */
 
-APEBUILD_DEF const char *ape_log_level_name(ApeLogLevel level) {
-	if (level < 0 || level > APE_LOG_OFF) return "UNKNOWN";
+APEBUILD_DEF const char *ape_log_level_name(ApeLogLevel level)
+{
+	if (level < 0 || level > APE_LOG_OFF)
+		return "UNKNOWN";
 	return ape_log_level_names[level];
 }
 
-APEBUILD_DEF int ape_log_level_from_name(const char *name, ApeLogLevel *out) {
-	if (!name || !out) return APEBUILD_FALSE;
+APEBUILD_DEF int ape_log_level_from_name(const char *name, ApeLogLevel *out)
+{
+	if (!name || !out)
+		return APEBUILD_FALSE;
 
 	for (int i = 0; i <= APE_LOG_OFF; i++) {
 		if (ape_str_eq_nocase(name, ape_log_level_names[i])) {
@@ -202,20 +244,28 @@ APEBUILD_DEF int ape_log_level_from_name(const char *name, ApeLogLevel *out) {
 	return APEBUILD_FALSE;
 }
 
-APEBUILD_DEF void ape_log_flush(void) {
-	if (ape_log_config.output) { fflush(ape_log_config.output); }
-	if (ape_log_config.file_output) { fflush(ape_log_config.file_output); }
+APEBUILD_DEF void ape_log_flush(void)
+{
+	if (ape_log_config.output) {
+		fflush(ape_log_config.output);
+	}
+	if (ape_log_config.file_output) {
+		fflush(ape_log_config.file_output);
+	}
 }
 
 /* ============================================================================
  * Build System Specific Logging
  * ============================================================================ */
 
-APEBUILD_PRIVATE void ape_log_build_msg(const char *prefix, const char *color, const char *fmt, va_list args) {
-	if (!ape_log_initialized) ape_log_init();
+APEBUILD_PRIVATE void ape_log_build_msg(const char *prefix, const char *color, const char *fmt, va_list args)
+{
+	if (!ape_log_initialized)
+		ape_log_init();
 
 	FILE *fp = ape_log_config.output;
-	if (!fp) return;
+	if (!fp)
+		return;
 
 	if (ape_log_config.use_colors && color) {
 		fprintf(fp, "%s%s%s ", color, prefix, ape_log_reset);
@@ -227,35 +277,40 @@ APEBUILD_PRIVATE void ape_log_build_msg(const char *prefix, const char *color, c
 	fprintf(fp, "\n");
 }
 
-APEBUILD_DEF void ape_log_cmd(const char *fmt, ...) {
+APEBUILD_DEF void ape_log_cmd(const char *fmt, ...)
+{
 	va_list args;
 	va_start(args, fmt);
 	ape_log_build_msg("CMD:", "\033[36m", fmt, args); /* cyan */
 	va_end(args);
 }
 
-APEBUILD_DEF void ape_log_build(const char *fmt, ...) {
+APEBUILD_DEF void ape_log_build(const char *fmt, ...)
+{
 	va_list args;
 	va_start(args, fmt);
 	ape_log_build_msg("BUILD:", "\033[34m", fmt, args); /* blue */
 	va_end(args);
 }
 
-APEBUILD_DEF void ape_log_link(const char *fmt, ...) {
+APEBUILD_DEF void ape_log_link(const char *fmt, ...)
+{
 	va_list args;
 	va_start(args, fmt);
 	ape_log_build_msg("LINK:", "\033[35m", fmt, args); /* magenta */
 	va_end(args);
 }
 
-APEBUILD_DEF void ape_log_success(const char *fmt, ...) {
+APEBUILD_DEF void ape_log_success(const char *fmt, ...)
+{
 	va_list args;
 	va_start(args, fmt);
 	ape_log_build_msg("OK:", "\033[32m", fmt, args); /* green */
 	va_end(args);
 }
 
-APEBUILD_DEF void ape_log_failure(const char *fmt, ...) {
+APEBUILD_DEF void ape_log_failure(const char *fmt, ...)
+{
 	va_list args;
 	va_start(args, fmt);
 	ape_log_build_msg("FAIL:", "\033[31m", fmt, args); /* red */

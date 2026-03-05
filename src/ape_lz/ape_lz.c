@@ -50,22 +50,28 @@
 #define XXH32_PRIME4 0x27D4EB2FU
 #define XXH32_PRIME5 0x165667B1U
 
-APE_LZ_PRIVATE uint32_t xxh32_rotl(uint32_t x, int r) { return (x << r) | (x >> (32 - r)); }
+APE_LZ_PRIVATE uint32_t xxh32_rotl(uint32_t x, int r)
+{
+	return (x << r) | (x >> (32 - r));
+}
 
-APE_LZ_PRIVATE uint32_t xxh32_read32(const uint8_t *p) {
+APE_LZ_PRIVATE uint32_t xxh32_read32(const uint8_t *p)
+{
 	uint32_t v;
 	memcpy(&v, p, 4);
 	return v;
 }
 
-APE_LZ_PRIVATE uint32_t xxh32_round(uint32_t acc, uint32_t input) {
+APE_LZ_PRIVATE uint32_t xxh32_round(uint32_t acc, uint32_t input)
+{
 	acc += input * XXH32_PRIME2;
 	acc = xxh32_rotl(acc, 13);
 	acc *= XXH32_PRIME1;
 	return acc;
 }
 
-APE_LZ_PRIVATE uint32_t xxh32(const uint8_t *data, size_t len, uint32_t seed) {
+APE_LZ_PRIVATE uint32_t xxh32(const uint8_t *data, size_t len, uint32_t seed)
+{
 	const uint8_t *p = data;
 	const uint8_t *end = data + len;
 	uint32_t h;
@@ -118,20 +124,28 @@ APE_LZ_PRIVATE uint32_t xxh32(const uint8_t *data, size_t len, uint32_t seed) {
  * LZ4 Block Compression
  * ============================================================================ */
 
-APE_LZ_PRIVATE uint32_t lz4_hash(uint32_t val) { return (val * 2654435761U) >> (32 - APE_LZ4_HASHTABLE_BITS); }
+APE_LZ_PRIVATE uint32_t lz4_hash(uint32_t val)
+{
+	return (val * 2654435761U) >> (32 - APE_LZ4_HASHTABLE_BITS);
+}
 
-APE_LZ_PRIVATE uint32_t lz4_read32(const uint8_t *p) {
+APE_LZ_PRIVATE uint32_t lz4_read32(const uint8_t *p)
+{
 	uint32_t v;
 	memcpy(&v, p, 4);
 	return v;
 }
 
-APE_LZ_PRIVATE void lz4_write16le(uint8_t *p, uint16_t v) {
+APE_LZ_PRIVATE void lz4_write16le(uint8_t *p, uint16_t v)
+{
 	p[0] = (uint8_t)(v);
 	p[1] = (uint8_t)(v >> 8);
 }
 
-APE_LZ_PRIVATE uint16_t lz4_read16le(const uint8_t *p) { return (uint16_t)p[0] | ((uint16_t)p[1] << 8); }
+APE_LZ_PRIVATE uint16_t lz4_read16le(const uint8_t *p)
+{
+	return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
 
 /*
  * Compress a single LZ4 block.
@@ -139,9 +153,12 @@ APE_LZ_PRIVATE uint16_t lz4_read16le(const uint8_t *p) { return (uint16_t)p[0] |
  * (output would be >= input).
  * dst must be at least src_len + (src_len / 255) + 16 bytes.
  */
-APE_LZ_PRIVATE size_t lz4_block_compress(const uint8_t *src, size_t src_len, uint8_t *dst, size_t dst_cap) {
-	if (src_len == 0) return 0;
-	if (src_len > APE_LZ4_MAX_INPUT_SIZE) return 0;
+APE_LZ_PRIVATE size_t lz4_block_compress(const uint8_t *src, size_t src_len, uint8_t *dst, size_t dst_cap)
+{
+	if (src_len == 0)
+		return 0;
+	if (src_len > APE_LZ4_MAX_INPUT_SIZE)
+		return 0;
 
 	uint16_t htable[APE_LZ4_HASHTABLE_SIZE];
 	memset(htable, 0, sizeof(htable));
@@ -156,7 +173,9 @@ APE_LZ_PRIVATE size_t lz4_block_compress(const uint8_t *src, size_t src_len, uin
 	uint8_t *oend = dst + dst_cap;
 
 	/* Input too small for any match */
-	if (src_len < APE_LZ4_MFLIMIT) { goto emit_last_literals; }
+	if (src_len < APE_LZ4_MFLIMIT) {
+		goto emit_last_literals;
+	}
 
 	/* First byte */
 	htable[lz4_hash(lz4_read32(ip))] = (uint16_t)(ip - src);
@@ -181,7 +200,8 @@ APE_LZ_PRIVATE size_t lz4_block_compress(const uint8_t *src, size_t src_len, uin
 				forwardip += step;
 				step = (skip++ >> 6);
 
-				if (forwardip > mflimit) goto emit_last_literals;
+				if (forwardip > mflimit)
+					goto emit_last_literals;
 
 				uint32_t h = lz4_hash(lz4_read32(ip));
 				match = src + htable[h];
@@ -192,25 +212,29 @@ APE_LZ_PRIVATE size_t lz4_block_compress(const uint8_t *src, size_t src_len, uin
 		/* Emit literals from anchor to ip */
 		literal_len = (size_t)(ip - anchor);
 		token_ptr = op++;
-		if (op >= oend) return 0;
+		if (op >= oend)
+			return 0;
 
 		/* Write literal length */
 		if (literal_len >= 15) {
 			*token_ptr = 0xF0;
 			size_t remaining = literal_len - 15;
 			while (remaining >= 255) {
-				if (op >= oend) return 0;
+				if (op >= oend)
+					return 0;
 				*op++ = 255;
 				remaining -= 255;
 			}
-			if (op >= oend) return 0;
+			if (op >= oend)
+				return 0;
 			*op++ = (uint8_t)remaining;
 		} else {
 			*token_ptr = (uint8_t)(literal_len << 4);
 		}
 
 		/* Copy literals */
-		if (op + literal_len > oend) return 0;
+		if (op + literal_len > oend)
+			return 0;
 		memcpy(op, anchor, literal_len);
 		op += literal_len;
 
@@ -218,7 +242,8 @@ APE_LZ_PRIVATE size_t lz4_block_compress(const uint8_t *src, size_t src_len, uin
 		for (;;) {
 			/* Offset (little-endian) */
 			offset = (uint16_t)(ip - match);
-			if (op + 2 > oend) return 0;
+			if (op + 2 > oend)
+				return 0;
 			lz4_write16le(op, offset);
 			op += 2;
 
@@ -239,11 +264,13 @@ APE_LZ_PRIVATE size_t lz4_block_compress(const uint8_t *src, size_t src_len, uin
 				*token_ptr |= 0x0F;
 				size_t remaining = match_len - 15;
 				while (remaining >= 255) {
-					if (op >= oend) return 0;
+					if (op >= oend)
+						return 0;
 					*op++ = 255;
 					remaining -= 255;
 				}
-				if (op >= oend) return 0;
+				if (op >= oend)
+					return 0;
 				*op++ = (uint8_t)remaining;
 			} else {
 				*token_ptr |= (uint8_t)match_len;
@@ -252,7 +279,8 @@ APE_LZ_PRIVATE size_t lz4_block_compress(const uint8_t *src, size_t src_len, uin
 			anchor = ip;
 
 			/* Check end of block */
-			if (ip > mflimit) goto emit_last_literals;
+			if (ip > mflimit)
+				goto emit_last_literals;
 
 			/* Update hash table */
 			htable[lz4_hash(lz4_read32(ip - 2))] = (uint16_t)(ip - 2 - src);
@@ -263,11 +291,13 @@ APE_LZ_PRIVATE size_t lz4_block_compress(const uint8_t *src, size_t src_len, uin
 				match = src + htable[h];
 				htable[h] = (uint16_t)(ip - src);
 			}
-			if (lz4_read32(match) != lz4_read32(ip) || (size_t)(ip - match) > APE_LZ4_MAX_OFFSET) break;
+			if (lz4_read32(match) != lz4_read32(ip) || (size_t)(ip - match) > APE_LZ4_MAX_OFFSET)
+				break;
 
 			/* Chain: emit zero-literal token for next match */
 			token_ptr = op++;
-			if (op >= oend) return 0;
+			if (op >= oend)
+				return 0;
 			*token_ptr = 0;
 		}
 
@@ -279,23 +309,27 @@ emit_last_literals:;
 	/* Emit last literals (mandatory — the last sequence has no match) */
 	size_t last_literal_len = (size_t)(iend - anchor);
 	uint8_t *last_token = op++;
-	if (op >= oend) return 0;
+	if (op >= oend)
+		return 0;
 
 	if (last_literal_len >= 15) {
 		*last_token = 0xF0;
 		size_t remaining = last_literal_len - 15;
 		while (remaining >= 255) {
-			if (op >= oend) return 0;
+			if (op >= oend)
+				return 0;
 			*op++ = 255;
 			remaining -= 255;
 		}
-		if (op >= oend) return 0;
+		if (op >= oend)
+			return 0;
 		*op++ = (uint8_t)remaining;
 	} else {
 		*last_token = (uint8_t)(last_literal_len << 4);
 	}
 
-	if (op + last_literal_len > oend) return 0;
+	if (op + last_literal_len > oend)
+		return 0;
 	memcpy(op, anchor, last_literal_len);
 	op += last_literal_len;
 
@@ -310,14 +344,16 @@ emit_last_literals:;
  * Decompress a single LZ4 block.
  * Returns decompressed size, or 0 on error.
  */
-APE_LZ_PRIVATE size_t lz4_block_decompress(const uint8_t *src, size_t src_len, uint8_t *dst, size_t dst_cap) {
+APE_LZ_PRIVATE size_t lz4_block_decompress(const uint8_t *src, size_t src_len, uint8_t *dst, size_t dst_cap)
+{
 	const uint8_t *ip = src;
 	const uint8_t *iend = src + src_len;
 	uint8_t *op = dst;
 	uint8_t *oend = dst + dst_cap;
 
 	for (;;) {
-		if (ip >= iend) return 0; /* truncated */
+		if (ip >= iend)
+			return 0; /* truncated */
 
 		/* Read token */
 		uint8_t token = *ip++;
@@ -328,48 +364,59 @@ APE_LZ_PRIVATE size_t lz4_block_decompress(const uint8_t *src, size_t src_len, u
 		if (literal_len == 15) {
 			uint8_t s;
 			do {
-				if (ip >= iend) return 0;
+				if (ip >= iend)
+					return 0;
 				s = *ip++;
 				literal_len += s;
 			} while (s == 255);
 		}
 
 		/* Copy literals */
-		if (ip + literal_len > iend) return 0;
-		if (op + literal_len > oend) return 0;
+		if (ip + literal_len > iend)
+			return 0;
+		if (op + literal_len > oend)
+			return 0;
 		memcpy(op, ip, literal_len);
 		ip += literal_len;
 		op += literal_len;
 
 		/* Check if this was the last sequence (no offset follows) */
-		if (ip >= iend) break;
+		if (ip >= iend)
+			break;
 
 		/* Read offset (2 bytes, little-endian) */
-		if (ip + 2 > iend) return 0;
+		if (ip + 2 > iend)
+			return 0;
 		uint16_t offset = lz4_read16le(ip);
 		ip += 2;
 
-		if (offset == 0) return 0; /* invalid offset */
+		if (offset == 0)
+			return 0; /* invalid offset */
 
 		const uint8_t *match = op - offset;
-		if (match < dst) return 0; /* offset points before output buffer */
+		if (match < dst)
+			return 0; /* offset points before output buffer */
 
 		/* Decode match length */
 		match_len = (token & 0x0F) + APE_LZ4_MINMATCH;
 		if ((token & 0x0F) == 15) {
 			uint8_t s;
 			do {
-				if (ip >= iend) return 0;
+				if (ip >= iend)
+					return 0;
 				s = *ip++;
 				match_len += s;
 			} while (s == 255);
 		}
 
 		/* Copy match (byte-by-byte to handle overlapping correctly) */
-		if (op + match_len > oend) return 0;
+		if (op + match_len > oend)
+			return 0;
 		{
 			size_t i;
-			for (i = 0; i < match_len; i++) { op[i] = match[i]; }
+			for (i = 0; i < match_len; i++) {
+				op[i] = match[i];
+			}
 		}
 		op += match_len;
 	}
@@ -381,7 +428,8 @@ APE_LZ_PRIVATE size_t lz4_block_decompress(const uint8_t *src, size_t src_len, u
  * Frame Encode
  * ============================================================================ */
 
-APE_LZ_DEF ApeLZ4Result ape_lz4_compress(const uint8_t *src, size_t src_len, const ApeLZ4Options *opts) {
+APE_LZ_DEF ApeLZ4Result ape_lz4_compress(const uint8_t *src, size_t src_len, const ApeLZ4Options *opts)
+{
 	ApeLZ4Result result;
 	result.data = NULL;
 	result.size = 0;
@@ -401,7 +449,8 @@ APE_LZ_DEF ApeLZ4Result ape_lz4_compress(const uint8_t *src, size_t src_len, con
 	defaults.block_checksum = 0;
 	defaults.content_checksum = 0;
 	defaults.content_size = 0;
-	if (opts == NULL) opts = &defaults;
+	if (opts == NULL)
+		opts = &defaults;
 
 	size_t block_max = APE_LZ4_BLKMAX_4M;
 
@@ -414,7 +463,8 @@ APE_LZ_DEF ApeLZ4Result ape_lz4_compress(const uint8_t *src, size_t src_len, con
 	 * block_data worst case: src_len + (src_len/255) + 16
 	 */
 	size_t n_blocks = (src_len + block_max - 1) / block_max;
-	if (n_blocks == 0) n_blocks = 1;
+	if (n_blocks == 0)
+		n_blocks = 1;
 	size_t out_cap = 4 + 3 + 8 + n_blocks * (4 + block_max + (block_max / 255) + 16 + 4) + 4 + 4;
 
 	uint8_t *out = (uint8_t *)APE_LZ_MALLOC(out_cap);
@@ -432,9 +482,12 @@ APE_LZ_DEF ApeLZ4Result ape_lz4_compress(const uint8_t *src, size_t src_len, con
 
 	/* FLG byte */
 	uint8_t flg = APE_LZ4_FLG_VERSION | APE_LZ4_FLG_INDEP; /* version 01, independent blocks */
-	if (opts->block_checksum) flg |= APE_LZ4_FLG_BLKCHKSUM;
-	if (opts->content_checksum) flg |= APE_LZ4_FLG_FULLCHKSUM;
-	if (opts->content_size) flg |= APE_LZ4_FLG_SIZE;
+	if (opts->block_checksum)
+		flg |= APE_LZ4_FLG_BLKCHKSUM;
+	if (opts->content_checksum)
+		flg |= APE_LZ4_FLG_FULLCHKSUM;
+	if (opts->content_size)
+		flg |= APE_LZ4_FLG_SIZE;
 
 	/* BD byte: block max size = 4MB (value 7 in bits 6-4) */
 	uint8_t bd = APE_LZ4_BD_4M;
@@ -483,7 +536,8 @@ APE_LZ_DEF ApeLZ4Result ape_lz4_compress(const uint8_t *src, size_t src_len, con
 	size_t offset = 0;
 	while (offset < src_len) {
 		size_t chunk = src_len - offset;
-		if (chunk > block_max) chunk = block_max;
+		if (chunk > block_max)
+			chunk = block_max;
 
 		size_t comp_size = lz4_block_compress(src + offset, chunk, comp_buf, comp_cap);
 
@@ -533,7 +587,8 @@ APE_LZ_DEF ApeLZ4Result ape_lz4_compress(const uint8_t *src, size_t src_len, con
  * Frame Decode
  * ============================================================================ */
 
-APE_LZ_DEF ApeLZ4Result ape_lz4_decompress(const uint8_t *src, size_t src_len) {
+APE_LZ_DEF ApeLZ4Result ape_lz4_decompress(const uint8_t *src, size_t src_len)
+{
 	ApeLZ4Result result;
 	result.data = NULL;
 	result.size = 0;
@@ -622,7 +677,8 @@ APE_LZ_DEF ApeLZ4Result ape_lz4_decompress(const uint8_t *src, size_t src_len) {
 		uint32_t block_header = ape_pack_reader_read_u32(&r);
 
 		/* EndMark */
-		if (block_header == APE_LZ4_ENDMARK) break;
+		if (block_header == APE_LZ4_ENDMARK)
+			break;
 
 		int is_uncompressed = (block_header & 0x80000000U) != 0;
 		uint32_t block_data_size = block_header & 0x7FFFFFFFU;
@@ -721,20 +777,21 @@ APE_LZ_DEF ApeLZ4Result ape_lz4_decompress(const uint8_t *src, size_t src_len) {
  * Error String
  * ============================================================================ */
 
-APE_LZ_DEF const char *ape_lz4_error_string(ApeLZ4Error err) {
+APE_LZ_DEF const char *ape_lz4_error_string(ApeLZ4Error err)
+{
 	switch (err) {
-	case APE_LZ4_OK: return "success";
-	case APE_LZ4_ERR_NULL_INPUT: return "null input pointer";
-	case APE_LZ4_ERR_NULL_OUTPUT: return "null output pointer";
-	case APE_LZ4_ERR_INPUT_TOO_LARGE: return "input exceeds maximum supported size";
-	case APE_LZ4_ERR_OUTPUT_TOO_SMALL: return "output buffer too small";
-	case APE_LZ4_ERR_ALLOC_FAILED: return "memory allocation failed";
-	case APE_LZ4_ERR_BAD_MAGIC: return "invalid frame magic number";
-	case APE_LZ4_ERR_BAD_VERSION: return "unsupported frame version";
-	case APE_LZ4_ERR_BAD_CHECKSUM: return "checksum mismatch";
-	case APE_LZ4_ERR_BAD_BLOCK: return "invalid block size";
-	case APE_LZ4_ERR_CORRUPT: return "compressed data is corrupt or truncated";
-	case APE_LZ4_ERR_NO_ENDMARK: return "frame missing end mark";
+		case APE_LZ4_OK: return "success";
+		case APE_LZ4_ERR_NULL_INPUT: return "null input pointer";
+		case APE_LZ4_ERR_NULL_OUTPUT: return "null output pointer";
+		case APE_LZ4_ERR_INPUT_TOO_LARGE: return "input exceeds maximum supported size";
+		case APE_LZ4_ERR_OUTPUT_TOO_SMALL: return "output buffer too small";
+		case APE_LZ4_ERR_ALLOC_FAILED: return "memory allocation failed";
+		case APE_LZ4_ERR_BAD_MAGIC: return "invalid frame magic number";
+		case APE_LZ4_ERR_BAD_VERSION: return "unsupported frame version";
+		case APE_LZ4_ERR_BAD_CHECKSUM: return "checksum mismatch";
+		case APE_LZ4_ERR_BAD_BLOCK: return "invalid block size";
+		case APE_LZ4_ERR_CORRUPT: return "compressed data is corrupt or truncated";
+		case APE_LZ4_ERR_NO_ENDMARK: return "frame missing end mark";
 	}
 	return "unknown error";
 }

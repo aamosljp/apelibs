@@ -152,8 +152,10 @@ APEBUILD_PRIVATE int ape_build_initialized = 0;
  * Initialization and Shutdown
  * ============================================================================ */
 
-APEBUILD_DEF void ape_build_init(void) {
-	if (ape_build_initialized) return;
+APEBUILD_DEF void ape_build_init(void)
+{
+	if (ape_build_initialized)
+		return;
 
 	memset(ape_toolchain_storage, 0, sizeof(ape_toolchain_storage));
 	memset(ape_builder_storage, 0, sizeof(ape_builder_storage));
@@ -162,7 +164,8 @@ APEBUILD_DEF void ape_build_init(void) {
 	ape_build_initialized = 1;
 }
 
-APEBUILD_PRIVATE void ape_toolchain_clear(ApeToolchain *tc) {
+APEBUILD_PRIVATE void ape_toolchain_clear(ApeToolchain *tc)
+{
 	APEBUILD_FREE(tc->name);
 	APEBUILD_FREE(tc->cc);
 	APEBUILD_FREE(tc->cxx);
@@ -178,7 +181,8 @@ APEBUILD_PRIVATE void ape_toolchain_clear(ApeToolchain *tc) {
 	memset(tc, 0, sizeof(ApeToolchain));
 }
 
-APEBUILD_PRIVATE void ape_task_clear(ApeTask *task) {
+APEBUILD_PRIVATE void ape_task_clear(ApeTask *task)
+{
 	APEBUILD_FREE(task->name);
 	APEBUILD_FREE(task->input);
 	APEBUILD_FREE(task->output);
@@ -187,7 +191,8 @@ APEBUILD_PRIVATE void ape_task_clear(ApeTask *task) {
 	memset(task, 0, sizeof(ApeTask));
 }
 
-APEBUILD_PRIVATE void ape_builder_clear(ApeBuilder *builder) {
+APEBUILD_PRIVATE void ape_builder_clear(ApeBuilder *builder)
+{
 	APEBUILD_FREE(builder->name);
 	APEBUILD_FREE(builder->output_dir);
 	APEBUILD_FREE(builder->output_name);
@@ -205,28 +210,37 @@ APEBUILD_PRIVATE void ape_builder_clear(ApeBuilder *builder) {
 	memset(builder, 0, sizeof(ApeBuilder));
 }
 
-APEBUILD_DEF void ape_build_shutdown(void) {
-	if (!ape_build_initialized) return;
+APEBUILD_DEF void ape_build_shutdown(void)
+{
+	if (!ape_build_initialized)
+		return;
 
 	/* Free all toolchains */
 	for (int i = 0; i < APE_MAX_TOOLCHAINS; i++) {
-		if (ape_toolchain_storage[i].in_use) { ape_toolchain_clear(&ape_toolchain_storage[i]); }
+		if (ape_toolchain_storage[i].in_use) {
+			ape_toolchain_clear(&ape_toolchain_storage[i]);
+		}
 	}
 
 	/* Free all tasks */
 	for (int i = 0; i < APE_MAX_TASKS; i++) {
-		if (ape_task_storage[i].in_use) { ape_task_clear(&ape_task_storage[i]); }
+		if (ape_task_storage[i].in_use) {
+			ape_task_clear(&ape_task_storage[i]);
+		}
 	}
 
 	/* Free all builders */
 	for (int i = 0; i < APE_MAX_BUILDERS; i++) {
-		if (ape_builder_storage[i].in_use) { ape_builder_clear(&ape_builder_storage[i]); }
+		if (ape_builder_storage[i].in_use) {
+			ape_builder_clear(&ape_builder_storage[i]);
+		}
 	}
 
 	ape_build_initialized = 0;
 }
 
-APEBUILD_DEF void ape_build_reset(void) {
+APEBUILD_DEF void ape_build_reset(void)
+{
 	ape_build_shutdown();
 	ape_build_init();
 }
@@ -235,7 +249,8 @@ APEBUILD_DEF void ape_build_reset(void) {
  * Toolchain Implementation
  * ============================================================================ */
 
-APEBUILD_DEF ApeToolchainHandle ape_toolchain_new(const char *name) {
+APEBUILD_DEF ApeToolchainHandle ape_toolchain_new(const char *name)
+{
 	ape_build_init();
 
 	for (int i = 0; i < APE_MAX_TOOLCHAINS; i++) {
@@ -263,26 +278,38 @@ APEBUILD_DEF ApeToolchainHandle ape_toolchain_new(const char *name) {
 	return APE_INVALID_TOOLCHAIN;
 }
 
-APEBUILD_DEF void ape_toolchain_free(ApeToolchainHandle handle) {
+APEBUILD_DEF void ape_toolchain_free(ApeToolchainHandle handle)
+{
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (tc) { ape_toolchain_clear(tc); }
+	if (tc) {
+		ape_toolchain_clear(tc);
+	}
 }
 
-APEBUILD_DEF ApeToolchain *ape_toolchain_get(ApeToolchainHandle handle) {
-	if (handle < 0 || handle >= APE_MAX_TOOLCHAINS) return NULL;
-	if (!ape_toolchain_storage[handle].in_use) return NULL;
+APEBUILD_DEF ApeToolchain *ape_toolchain_get(ApeToolchainHandle handle)
+{
+	if (handle < 0 || handle >= APE_MAX_TOOLCHAINS)
+		return NULL;
+	if (!ape_toolchain_storage[handle].in_use)
+		return NULL;
 	return &ape_toolchain_storage[handle];
 }
 
-APEBUILD_DEF int ape_toolchain_valid(ApeToolchainHandle handle) { return ape_toolchain_get(handle) != NULL; }
+APEBUILD_DEF int ape_toolchain_valid(ApeToolchainHandle handle)
+{
+	return ape_toolchain_get(handle) != NULL;
+}
 
-APEBUILD_DEF ApeToolchainHandle ape_toolchain_clone(ApeToolchainHandle handle) {
+APEBUILD_DEF ApeToolchainHandle ape_toolchain_clone(ApeToolchainHandle handle)
+{
 	ApeToolchain *src = ape_toolchain_get(handle);
-	if (!src) return APE_INVALID_TOOLCHAIN;
+	if (!src)
+		return APE_INVALID_TOOLCHAIN;
 
 	ApeToolchainHandle new_handle = ape_toolchain_new(src->name);
 	ApeToolchain *tc = ape_toolchain_get(new_handle);
-	if (!tc) return APE_INVALID_TOOLCHAIN;
+	if (!tc)
+		return APE_INVALID_TOOLCHAIN;
 
 	APEBUILD_FREE(tc->cc);
 	APEBUILD_FREE(tc->cxx);
@@ -309,10 +336,12 @@ APEBUILD_DEF ApeToolchainHandle ape_toolchain_clone(ApeToolchainHandle handle) {
 	return new_handle;
 }
 
-APEBUILD_DEF ApeToolchainHandle ape_toolchain_gcc(void) {
+APEBUILD_DEF ApeToolchainHandle ape_toolchain_gcc(void)
+{
 	ApeToolchainHandle handle = ape_toolchain_new("gcc");
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (!tc) return APE_INVALID_TOOLCHAIN;
+	if (!tc)
+		return APE_INVALID_TOOLCHAIN;
 
 	APEBUILD_FREE(tc->cc);
 	APEBUILD_FREE(tc->cxx);
@@ -324,10 +353,12 @@ APEBUILD_DEF ApeToolchainHandle ape_toolchain_gcc(void) {
 	return handle;
 }
 
-APEBUILD_DEF ApeToolchainHandle ape_toolchain_clang(void) {
+APEBUILD_DEF ApeToolchainHandle ape_toolchain_clang(void)
+{
 	ApeToolchainHandle handle = ape_toolchain_new("clang");
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (!tc) return APE_INVALID_TOOLCHAIN;
+	if (!tc)
+		return APE_INVALID_TOOLCHAIN;
 
 	APEBUILD_FREE(tc->cc);
 	APEBUILD_FREE(tc->cxx);
@@ -339,10 +370,12 @@ APEBUILD_DEF ApeToolchainHandle ape_toolchain_clang(void) {
 	return handle;
 }
 
-APEBUILD_DEF ApeToolchainHandle ape_toolchain_emcc(void) {
+APEBUILD_DEF ApeToolchainHandle ape_toolchain_emcc(void)
+{
 	ApeToolchainHandle handle = ape_toolchain_new("emcc");
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (!tc) return APE_INVALID_TOOLCHAIN;
+	if (!tc)
+		return APE_INVALID_TOOLCHAIN;
 
 	APEBUILD_FREE(tc->cc);
 	APEBUILD_FREE(tc->cxx);
@@ -360,43 +393,55 @@ APEBUILD_DEF ApeToolchainHandle ape_toolchain_emcc(void) {
 	return handle;
 }
 
-APEBUILD_DEF void ape_toolchain_set_cc(ApeToolchainHandle handle, const char *cc) {
+APEBUILD_DEF void ape_toolchain_set_cc(ApeToolchainHandle handle, const char *cc)
+{
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (!tc) return;
+	if (!tc)
+		return;
 	APEBUILD_FREE(tc->cc);
 	tc->cc = ape_str_dup(cc);
 }
 
-APEBUILD_DEF void ape_toolchain_set_cxx(ApeToolchainHandle handle, const char *cxx) {
+APEBUILD_DEF void ape_toolchain_set_cxx(ApeToolchainHandle handle, const char *cxx)
+{
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (!tc) return;
+	if (!tc)
+		return;
 	APEBUILD_FREE(tc->cxx);
 	tc->cxx = ape_str_dup(cxx);
 }
 
-APEBUILD_DEF void ape_toolchain_set_ld(ApeToolchainHandle handle, const char *ld) {
+APEBUILD_DEF void ape_toolchain_set_ld(ApeToolchainHandle handle, const char *ld)
+{
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (!tc) return;
+	if (!tc)
+		return;
 	APEBUILD_FREE(tc->ld);
 	tc->ld = ape_str_dup(ld);
 }
 
-APEBUILD_DEF void ape_toolchain_set_ar(ApeToolchainHandle handle, const char *ar) {
+APEBUILD_DEF void ape_toolchain_set_ar(ApeToolchainHandle handle, const char *ar)
+{
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (!tc) return;
+	if (!tc)
+		return;
 	APEBUILD_FREE(tc->ar);
 	tc->ar = ape_str_dup(ar);
 }
 
-APEBUILD_DEF void ape_toolchain_add_cflag(ApeToolchainHandle handle, const char *flag) {
+APEBUILD_DEF void ape_toolchain_add_cflag(ApeToolchainHandle handle, const char *flag)
+{
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (!tc) return;
+	if (!tc)
+		return;
 	ape_sl_append_dup(&tc->default_cflags, flag);
 }
 
-APEBUILD_DEF void ape_toolchain_add_ldflag(ApeToolchainHandle handle, const char *flag) {
+APEBUILD_DEF void ape_toolchain_add_ldflag(ApeToolchainHandle handle, const char *flag)
+{
 	ApeToolchain *tc = ape_toolchain_get(handle);
-	if (!tc) return;
+	if (!tc)
+		return;
 	ape_sl_append_dup(&tc->default_ldflags, flag);
 }
 
@@ -404,7 +449,8 @@ APEBUILD_DEF void ape_toolchain_add_ldflag(ApeToolchainHandle handle, const char
  * Task Implementation
  * ============================================================================ */
 
-APEBUILD_DEF ApeTaskHandle ape_task_new(ApeBuilderHandle builder_handle, ApeTaskType type, const char *name) {
+APEBUILD_DEF ApeTaskHandle ape_task_new(ApeBuilderHandle builder_handle, ApeTaskType type, const char *name)
+{
 	ape_build_init();
 
 	for (int i = 0; i < APE_MAX_TASKS; i++) {
@@ -429,84 +475,115 @@ APEBUILD_DEF ApeTaskHandle ape_task_new(ApeBuilderHandle builder_handle, ApeTask
 	return APE_INVALID_TASK;
 }
 
-APEBUILD_DEF void ape_task_free(ApeTaskHandle handle) {
+APEBUILD_DEF void ape_task_free(ApeTaskHandle handle)
+{
 	ApeTask *task = ape_task_get(handle);
-	if (task) { ape_task_clear(task); }
+	if (task) {
+		ape_task_clear(task);
+	}
 }
 
-APEBUILD_DEF ApeTask *ape_task_get(ApeTaskHandle handle) {
-	if (handle < 0 || handle >= APE_MAX_TASKS) return NULL;
-	if (!ape_task_storage[handle].in_use) return NULL;
+APEBUILD_DEF ApeTask *ape_task_get(ApeTaskHandle handle)
+{
+	if (handle < 0 || handle >= APE_MAX_TASKS)
+		return NULL;
+	if (!ape_task_storage[handle].in_use)
+		return NULL;
 	return &ape_task_storage[handle];
 }
 
-APEBUILD_DEF int ape_task_valid(ApeTaskHandle handle) { return ape_task_get(handle) != NULL; }
+APEBUILD_DEF int ape_task_valid(ApeTaskHandle handle)
+{
+	return ape_task_get(handle) != NULL;
+}
 
-APEBUILD_DEF void ape_task_set_input(ApeTaskHandle handle, const char *input) {
+APEBUILD_DEF void ape_task_set_input(ApeTaskHandle handle, const char *input)
+{
 	ApeTask *task = ape_task_get(handle);
-	if (!task) return;
+	if (!task)
+		return;
 	APEBUILD_FREE(task->input);
 	task->input = ape_str_dup(input);
 }
 
-APEBUILD_DEF void ape_task_set_output(ApeTaskHandle handle, const char *output) {
+APEBUILD_DEF void ape_task_set_output(ApeTaskHandle handle, const char *output)
+{
 	ApeTask *task = ape_task_get(handle);
-	if (!task) return;
+	if (!task)
+		return;
 	APEBUILD_FREE(task->output);
 	task->output = ape_str_dup(output);
 }
 
-APEBUILD_DEF void ape_task_add_input(ApeTaskHandle handle, const char *input) {
+APEBUILD_DEF void ape_task_add_input(ApeTaskHandle handle, const char *input)
+{
 	ApeTask *task = ape_task_get(handle);
-	if (!task) return;
+	if (!task)
+		return;
 	ape_sl_append_dup(&task->inputs, input);
 }
 
-APEBUILD_DEF void ape_task_add_dep(ApeTaskHandle handle, ApeTaskHandle dep) {
+APEBUILD_DEF void ape_task_add_dep(ApeTaskHandle handle, ApeTaskHandle dep)
+{
 	ApeTask *task = ape_task_get(handle);
-	if (!task) return;
-	if (task->deps.count >= APE_MAX_TASK_DEPS) return;
+	if (!task)
+		return;
+	if (task->deps.count >= APE_MAX_TASK_DEPS)
+		return;
 	task->deps.items[task->deps.count++] = dep;
 }
 
-APEBUILD_DEF void ape_task_set_cmd(ApeTaskHandle handle, ApeCmd cmd) {
+APEBUILD_DEF void ape_task_set_cmd(ApeTaskHandle handle, ApeCmd cmd)
+{
 	ApeTask *task = ape_task_get(handle);
-	if (!task) return;
+	if (!task)
+		return;
 	ape_cmd_free(&task->cmd);
 	task->cmd = cmd;
 }
 
-APEBUILD_DEF int ape_task_needs_rebuild(ApeTaskHandle handle) {
+APEBUILD_DEF int ape_task_needs_rebuild(ApeTaskHandle handle)
+{
 	ApeTask *task = ape_task_get(handle);
-	if (!task) return APEBUILD_FALSE;
+	if (!task)
+		return APEBUILD_FALSE;
 
 	/* No output means always run */
-	if (!task->output) return APEBUILD_TRUE;
+	if (!task->output)
+		return APEBUILD_TRUE;
 
 	/* Output doesn't exist */
-	if (!ape_fs_exists(task->output)) return APEBUILD_TRUE;
+	if (!ape_fs_exists(task->output))
+		return APEBUILD_TRUE;
 
 	/* Check primary input */
 	if (task->input) {
-		if (ape_fs_is_newer(task->input, task->output)) return APEBUILD_TRUE;
+		if (ape_fs_is_newer(task->input, task->output))
+			return APEBUILD_TRUE;
 	}
 
 	/* Check additional inputs */
 	for (size_t i = 0; i < task->inputs.count; i++) {
-		if (ape_fs_is_newer(task->inputs.items[i], task->output)) return APEBUILD_TRUE;
+		if (ape_fs_is_newer(task->inputs.items[i], task->output))
+			return APEBUILD_TRUE;
 	}
 
 	return APEBUILD_FALSE;
 }
 
-APEBUILD_DEF int ape_task_ready(ApeTaskHandle handle) {
+APEBUILD_DEF int ape_task_ready(ApeTaskHandle handle)
+{
 	ApeTask *task = ape_task_get(handle);
-	if (!task) return APEBUILD_FALSE;
+	if (!task)
+		return APEBUILD_FALSE;
 
 	for (size_t i = 0; i < task->deps.count; i++) {
 		ApeTask *dep = ape_task_get(task->deps.items[i]);
-		if (!dep) continue;
-		if (dep->status != APE_TASK_COMPLETED && dep->status != APE_TASK_SKIPPED) { return APEBUILD_FALSE; }
+		if (!dep)
+			continue;
+		if (dep->status != APE_TASK_COMPLETED && dep->status != APE_TASK_SKIPPED) {
+			return APEBUILD_FALSE;
+		}
 	}
 	return APEBUILD_TRUE;
 }
@@ -515,7 +592,8 @@ APEBUILD_DEF int ape_task_ready(ApeTaskHandle handle) {
  * Builder Implementation
  * ============================================================================ */
 
-APEBUILD_DEF ApeBuilderHandle ape_builder_new(const char *name) {
+APEBUILD_DEF ApeBuilderHandle ape_builder_new(const char *name)
+{
 	ape_build_init();
 
 	for (int i = 0; i < APE_MAX_BUILDERS; i++) {
@@ -554,79 +632,108 @@ APEBUILD_DEF ApeBuilderHandle ape_builder_new(const char *name) {
 	return APE_INVALID_BUILDER;
 }
 
-APEBUILD_DEF void ape_builder_free(ApeBuilderHandle handle) {
+APEBUILD_DEF void ape_builder_free(ApeBuilderHandle handle)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 
 	/* Free associated tasks */
-	for (size_t i = 0; i < builder->tasks.count; i++) { ape_task_free(builder->tasks.items[i]); }
+	for (size_t i = 0; i < builder->tasks.count; i++) {
+		ape_task_free(builder->tasks.items[i]);
+	}
 
 	ape_builder_clear(builder);
 }
 
-APEBUILD_DEF ApeBuilder *ape_builder_get(ApeBuilderHandle handle) {
-	if (handle < 0 || handle >= APE_MAX_BUILDERS) return NULL;
-	if (!ape_builder_storage[handle].in_use) return NULL;
+APEBUILD_DEF ApeBuilder *ape_builder_get(ApeBuilderHandle handle)
+{
+	if (handle < 0 || handle >= APE_MAX_BUILDERS)
+		return NULL;
+	if (!ape_builder_storage[handle].in_use)
+		return NULL;
 	return &ape_builder_storage[handle];
 }
 
-APEBUILD_DEF int ape_builder_valid(ApeBuilderHandle handle) { return ape_builder_get(handle) != NULL; }
+APEBUILD_DEF int ape_builder_valid(ApeBuilderHandle handle)
+{
+	return ape_builder_get(handle) != NULL;
+}
 
-APEBUILD_DEF ApeBuilderHandle ape_builder_find(const char *name) {
+APEBUILD_DEF ApeBuilderHandle ape_builder_find(const char *name)
+{
 	for (int i = 0; i < APE_MAX_BUILDERS; i++) {
-		if (ape_builder_storage[i].in_use && ape_str_eq(ape_builder_storage[i].name, name)) { return (ApeBuilderHandle)i; }
+		if (ape_builder_storage[i].in_use && ape_str_eq(ape_builder_storage[i].name, name)) {
+			return (ApeBuilderHandle)i;
+		}
 	}
 	return APE_INVALID_BUILDER;
 }
 
-APEBUILD_DEF void ape_builder_set_type(ApeBuilderHandle handle, ApeTargetType type) {
+APEBUILD_DEF void ape_builder_set_type(ApeBuilderHandle handle, ApeTargetType type)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	builder->type = type;
 }
 
-APEBUILD_DEF void ape_builder_set_toolchain(ApeBuilderHandle handle, ApeToolchainHandle tc) {
+APEBUILD_DEF void ape_builder_set_toolchain(ApeBuilderHandle handle, ApeToolchainHandle tc)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	builder->toolchain = tc;
 }
 
-APEBUILD_DEF void ape_builder_set_output_dir(ApeBuilderHandle handle, const char *dir) {
+APEBUILD_DEF void ape_builder_set_output_dir(ApeBuilderHandle handle, const char *dir)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	APEBUILD_FREE(builder->output_dir);
 	builder->output_dir = ape_str_dup(dir);
 }
 
-APEBUILD_DEF void ape_builder_set_output_name(ApeBuilderHandle handle, const char *name) {
+APEBUILD_DEF void ape_builder_set_output_name(ApeBuilderHandle handle, const char *name)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	APEBUILD_FREE(builder->output_name);
 	builder->output_name = ape_str_dup(name);
 }
 
 /* Source management */
 
-APEBUILD_DEF void ape_builder_add_source(ApeBuilderHandle handle, const char *path) {
+APEBUILD_DEF void ape_builder_add_source(ApeBuilderHandle handle, const char *path)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->sources, path);
 }
 
-APEBUILD_DEF void ape_builder_add_sources(ApeBuilderHandle handle, const char **paths, size_t count) {
-	for (size_t i = 0; i < count; i++) { ape_builder_add_source(handle, paths[i]); }
+APEBUILD_DEF void ape_builder_add_sources(ApeBuilderHandle handle, const char **paths, size_t count)
+{
+	for (size_t i = 0; i < count; i++) {
+		ape_builder_add_source(handle, paths[i]);
+	}
 }
 
 typedef struct {
 	ApeBuilderHandle builder;
 } BuilderAddSourceCtx;
 
-APEBUILD_PRIVATE void ape_builder_add_source_callback(const char *path, const ApeDirEntry *entry, void *userdata) {
+APEBUILD_PRIVATE void ape_builder_add_source_callback(const char *path, const ApeDirEntry *entry, void *userdata)
+{
 	BuilderAddSourceCtx *ctx = (BuilderAddSourceCtx *)userdata;
 	ApeBuilder *builder = ape_builder_get(ctx->builder);
-	if (!builder) return;
+	if (!builder)
+		return;
 
-	if (!entry->is_file) return;
+	if (!entry->is_file)
+		return;
 
 	/* Only add C/C++ source files */
 	if (ape_str_ends_with(entry->name, ".c") || ape_str_ends_with(entry->name, ".cpp") || ape_str_ends_with(entry->name, ".cc") ||
@@ -636,19 +743,23 @@ APEBUILD_PRIVATE void ape_builder_add_source_callback(const char *path, const Ap
 	}
 }
 
-APEBUILD_DEF void ape_builder_add_source_dir(ApeBuilderHandle handle, const char *dir) {
+APEBUILD_DEF void ape_builder_add_source_dir(ApeBuilderHandle handle, const char *dir)
+{
 	BuilderAddSourceCtx ctx = { .builder = handle };
 	ape_fs_iterdir(dir, ape_builder_add_source_callback, &ctx);
 }
 
-APEBUILD_DEF void ape_builder_add_source_dir_r(ApeBuilderHandle handle, const char *dir) {
+APEBUILD_DEF void ape_builder_add_source_dir_r(ApeBuilderHandle handle, const char *dir)
+{
 	BuilderAddSourceCtx ctx = { .builder = handle };
 	ape_fs_iterdir_r(dir, ape_builder_add_source_callback, &ctx);
 }
 
-APEBUILD_DEF void ape_builder_add_source_glob(ApeBuilderHandle handle, const char *pattern) {
+APEBUILD_DEF void ape_builder_add_source_glob(ApeBuilderHandle handle, const char *pattern)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 
 	ApeStrList files = ape_fs_glob(pattern);
 	for (size_t i = 0; i < files.count; i++) {
@@ -661,27 +772,35 @@ APEBUILD_DEF void ape_builder_add_source_glob(ApeBuilderHandle handle, const cha
 
 /* Compiler flags */
 
-APEBUILD_DEF void ape_builder_add_cflag(ApeBuilderHandle handle, const char *flag) {
+APEBUILD_DEF void ape_builder_add_cflag(ApeBuilderHandle handle, const char *flag)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->cflags, flag);
 }
 
-APEBUILD_DEF void ape_builder_add_include(ApeBuilderHandle handle, const char *dir) {
+APEBUILD_DEF void ape_builder_add_include(ApeBuilderHandle handle, const char *dir)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->include_dirs, dir);
 }
 
-APEBUILD_DEF void ape_builder_add_define(ApeBuilderHandle handle, const char *define) {
+APEBUILD_DEF void ape_builder_add_define(ApeBuilderHandle handle, const char *define)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->defines, define);
 }
 
-APEBUILD_DEF void ape_builder_add_define_value(ApeBuilderHandle handle, const char *name, const char *value) {
+APEBUILD_DEF void ape_builder_add_define_value(ApeBuilderHandle handle, const char *name, const char *value)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 
 	ApeStrBuilder sb = ape_sb_new();
 	ape_sb_append_str(&sb, name);
@@ -693,79 +812,105 @@ APEBUILD_DEF void ape_builder_add_define_value(ApeBuilderHandle handle, const ch
 
 /* Linker flags */
 
-APEBUILD_DEF void ape_builder_add_ldflag(ApeBuilderHandle handle, const char *flag) {
+APEBUILD_DEF void ape_builder_add_ldflag(ApeBuilderHandle handle, const char *flag)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->ldflags, flag);
 }
 
-APEBUILD_DEF void ape_builder_add_lib_dir(ApeBuilderHandle handle, const char *dir) {
+APEBUILD_DEF void ape_builder_add_lib_dir(ApeBuilderHandle handle, const char *dir)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->lib_dirs, dir);
 }
 
-APEBUILD_DEF void ape_builder_add_lib(ApeBuilderHandle handle, const char *lib) {
+APEBUILD_DEF void ape_builder_add_lib(ApeBuilderHandle handle, const char *lib)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->libs, lib);
 }
 
 /* Emscripten/WASM configuration */
 
-APEBUILD_DEF void ape_builder_set_shell_file(ApeBuilderHandle handle, const char *path) {
+APEBUILD_DEF void ape_builder_set_shell_file(ApeBuilderHandle handle, const char *path)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	APEBUILD_FREE(builder->shell_file);
 	builder->shell_file = ape_str_dup(path);
 }
 
-APEBUILD_DEF void ape_builder_set_wasm_output_mode(ApeBuilderHandle handle, int html) {
+APEBUILD_DEF void ape_builder_set_wasm_output_mode(ApeBuilderHandle handle, int html)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	builder->wasm_html_output = html;
 }
 
-APEBUILD_DEF void ape_builder_add_exported_function(ApeBuilderHandle handle, const char *func) {
+APEBUILD_DEF void ape_builder_add_exported_function(ApeBuilderHandle handle, const char *func)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->exported_functions, func);
 }
 
-APEBUILD_DEF void ape_builder_add_preload_file(ApeBuilderHandle handle, const char *path) {
+APEBUILD_DEF void ape_builder_add_preload_file(ApeBuilderHandle handle, const char *path)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->preload_files, path);
 }
 
-APEBUILD_DEF void ape_builder_add_embed_file(ApeBuilderHandle handle, const char *path) {
+APEBUILD_DEF void ape_builder_add_embed_file(ApeBuilderHandle handle, const char *path)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	ape_sl_append_dup(&builder->embed_files, path);
 }
 
-APEBUILD_DEF void ape_builder_set_wasm_memory(ApeBuilderHandle handle, int initial_mb, int max_mb) {
+APEBUILD_DEF void ape_builder_set_wasm_memory(ApeBuilderHandle handle, int initial_mb, int max_mb)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 	builder->wasm_initial_memory = initial_mb;
 	builder->wasm_max_memory = max_mb;
 }
 
-APEBUILD_DEF const char *ape_emcc_default_shell(void) { return ape_emcc_default_shell_html; }
+APEBUILD_DEF const char *ape_emcc_default_shell(void)
+{
+	return ape_emcc_default_shell_html;
+}
 
 /* Dependencies */
 
-APEBUILD_DEF void ape_builder_depends_on(ApeBuilderHandle handle, ApeBuilderHandle dep) {
+APEBUILD_DEF void ape_builder_depends_on(ApeBuilderHandle handle, ApeBuilderHandle dep)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
-	if (builder->deps.count >= APE_MAX_BUILDER_DEPS) return;
+	if (!builder)
+		return;
+	if (builder->deps.count >= APE_MAX_BUILDER_DEPS)
+		return;
 	builder->deps.items[builder->deps.count++] = dep;
 }
 
-APEBUILD_DEF void ape_builder_link_with(ApeBuilderHandle handle, ApeBuilderHandle lib_builder_handle) {
+APEBUILD_DEF void ape_builder_link_with(ApeBuilderHandle handle, ApeBuilderHandle lib_builder_handle)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
 	ApeBuilder *lib_builder = ape_builder_get(lib_builder_handle);
-	if (!builder || !lib_builder) return;
+	if (!builder || !lib_builder)
+		return;
 
 	ape_builder_depends_on(handle, lib_builder_handle);
 
@@ -796,15 +941,19 @@ APEBUILD_DEF void ape_builder_link_with(ApeBuilderHandle handle, ApeBuilderHandl
 
 /* Build output path */
 
-APEBUILD_DEF char *ape_builder_output_path(ApeBuilderHandle handle) {
+APEBUILD_DEF char *ape_builder_output_path(ApeBuilderHandle handle)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return NULL;
+	if (!builder)
+		return NULL;
 
 	ApeToolchain *tc = ape_toolchain_get(builder->toolchain);
-	if (!tc) return NULL;
+	if (!tc)
+		return NULL;
 
 	const char *output_dir = builder->output_dir;
-	if (!output_dir) output_dir = "build";
+	if (!output_dir)
+		output_dir = "build";
 
 	const char *name = builder->output_name ? builder->output_name : builder->name;
 
@@ -813,32 +962,32 @@ APEBUILD_DEF char *ape_builder_output_path(ApeBuilderHandle handle) {
 	ape_sb_append_char(&sb, '/');
 
 	switch (builder->type) {
-	case APE_TARGET_EXECUTABLE:
-		ape_sb_append_str(&sb, name);
-		ape_sb_append_str(&sb, tc->exe_ext);
-		break;
-	case APE_TARGET_STATIC_LIB:
-		ape_sb_append_str(&sb, tc->lib_prefix);
-		ape_sb_append_str(&sb, name);
-		ape_sb_append_str(&sb, tc->static_lib_ext);
-		break;
-	case APE_TARGET_SHARED_LIB:
-		ape_sb_append_str(&sb, tc->lib_prefix);
-		ape_sb_append_str(&sb, name);
-		ape_sb_append_str(&sb, tc->shared_lib_ext);
-		break;
-	case APE_TARGET_OBJECT:
-		ape_sb_append_str(&sb, name);
-		ape_sb_append_str(&sb, tc->obj_ext);
-		break;
-	case APE_TARGET_WASM:
-		ape_sb_append_str(&sb, name);
-		if (builder->wasm_html_output) {
-			ape_sb_append_str(&sb, ".html");
-		} else {
-			ape_sb_append_str(&sb, ".js");
-		}
-		break;
+		case APE_TARGET_EXECUTABLE:
+			ape_sb_append_str(&sb, name);
+			ape_sb_append_str(&sb, tc->exe_ext);
+			break;
+		case APE_TARGET_STATIC_LIB:
+			ape_sb_append_str(&sb, tc->lib_prefix);
+			ape_sb_append_str(&sb, name);
+			ape_sb_append_str(&sb, tc->static_lib_ext);
+			break;
+		case APE_TARGET_SHARED_LIB:
+			ape_sb_append_str(&sb, tc->lib_prefix);
+			ape_sb_append_str(&sb, name);
+			ape_sb_append_str(&sb, tc->shared_lib_ext);
+			break;
+		case APE_TARGET_OBJECT:
+			ape_sb_append_str(&sb, name);
+			ape_sb_append_str(&sb, tc->obj_ext);
+			break;
+		case APE_TARGET_WASM:
+			ape_sb_append_str(&sb, name);
+			if (builder->wasm_html_output) {
+				ape_sb_append_str(&sb, ".html");
+			} else {
+				ape_sb_append_str(&sb, ".js");
+			}
+			break;
 	}
 
 	char *result = ape_sb_to_str_dup(&sb);
@@ -848,9 +997,11 @@ APEBUILD_DEF char *ape_builder_output_path(ApeBuilderHandle handle) {
 
 /* Task generation */
 
-APEBUILD_DEF ApeTaskHandle ape_builder_add_compile_task(ApeBuilderHandle handle, const char *source) {
+APEBUILD_DEF ApeTaskHandle ape_builder_add_compile_task(ApeBuilderHandle handle, const char *source)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return APE_INVALID_TASK;
+	if (!builder)
+		return APE_INVALID_TASK;
 
 	char *obj_path = ape_build_obj_path(NULL, handle, source);
 	char *base = ape_fs_basename(source);
@@ -891,10 +1042,14 @@ APEBUILD_DEF ApeTaskHandle ape_builder_add_compile_task(ApeBuilderHandle handle,
 	}
 
 	/* Default flags from toolchain */
-	for (size_t i = 0; i < tc->default_cflags.count; i++) { ape_cmd_append(&cmd, tc->default_cflags.items[i]); }
+	for (size_t i = 0; i < tc->default_cflags.count; i++) {
+		ape_cmd_append(&cmd, tc->default_cflags.items[i]);
+	}
 
 	/* Builder-specific flags */
-	for (size_t i = 0; i < builder->cflags.count; i++) { ape_cmd_append(&cmd, builder->cflags.items[i]); }
+	for (size_t i = 0; i < builder->cflags.count; i++) {
+		ape_cmd_append(&cmd, builder->cflags.items[i]);
+	}
 
 	/* Include directories */
 	for (size_t i = 0; i < builder->include_dirs.count; i++) {
@@ -915,7 +1070,9 @@ APEBUILD_DEF ApeTaskHandle ape_builder_add_compile_task(ApeBuilderHandle handle,
 	}
 
 	/* PIC for shared libraries */
-	if (builder->type == APE_TARGET_SHARED_LIB) { ape_cmd_append(&cmd, "-fPIC"); }
+	if (builder->type == APE_TARGET_SHARED_LIB) {
+		ape_cmd_append(&cmd, "-fPIC");
+	}
 
 	/* Compile only */
 	ape_cmd_append(&cmd, "-c");
@@ -926,17 +1083,22 @@ APEBUILD_DEF ApeTaskHandle ape_builder_add_compile_task(ApeBuilderHandle handle,
 	ape_task_set_cmd(task_handle, cmd);
 
 	/* Add to builder's task list */
-	if (builder->tasks.count < APE_MAX_TASKS) { builder->tasks.items[builder->tasks.count++] = task_handle; }
+	if (builder->tasks.count < APE_MAX_TASKS) {
+		builder->tasks.items[builder->tasks.count++] = task_handle;
+	}
 
 	return task_handle;
 }
 
-APEBUILD_DEF ApeTaskHandle ape_builder_add_link_task(ApeBuilderHandle handle) {
+APEBUILD_DEF ApeTaskHandle ape_builder_add_link_task(ApeBuilderHandle handle)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return APE_INVALID_TASK;
+	if (!builder)
+		return APE_INVALID_TASK;
 
 	char *output = ape_builder_output_path(handle);
-	if (!output) return APE_INVALID_TASK;
+	if (!output)
+		return APE_INVALID_TASK;
 
 	ApeStrBuilder name_sb = ape_sb_new();
 	ape_sb_append_str(&name_sb, "Link ");
@@ -966,13 +1128,19 @@ APEBUILD_DEF ApeTaskHandle ape_builder_add_link_task(ApeBuilderHandle handle) {
 	ape_cmd_append(&cmd, tc->ld);
 
 	/* Default linker flags */
-	for (size_t i = 0; i < tc->default_ldflags.count; i++) { ape_cmd_append(&cmd, tc->default_ldflags.items[i]); }
+	for (size_t i = 0; i < tc->default_ldflags.count; i++) {
+		ape_cmd_append(&cmd, tc->default_ldflags.items[i]);
+	}
 
 	/* Builder-specific linker flags */
-	for (size_t i = 0; i < builder->ldflags.count; i++) { ape_cmd_append(&cmd, builder->ldflags.items[i]); }
+	for (size_t i = 0; i < builder->ldflags.count; i++) {
+		ape_cmd_append(&cmd, builder->ldflags.items[i]);
+	}
 
 	/* Shared library flags */
-	if (builder->type == APE_TARGET_SHARED_LIB) { ape_cmd_append(&cmd, "-shared"); }
+	if (builder->type == APE_TARGET_SHARED_LIB) {
+		ape_cmd_append(&cmd, "-shared");
+	}
 
 	/* Output */
 	ape_cmd_append(&cmd, "-o");
@@ -1017,7 +1185,8 @@ APEBUILD_DEF ApeTaskHandle ape_builder_add_link_task(ApeBuilderHandle handle) {
 			ApeStrBuilder exports_sb = ape_sb_new();
 			ape_sb_append_str(&exports_sb, "-sEXPORTED_FUNCTIONS=");
 			for (size_t i = 0; i < builder->exported_functions.count; i++) {
-				if (i > 0) ape_sb_append_char(&exports_sb, ',');
+				if (i > 0)
+					ape_sb_append_char(&exports_sb, ',');
 				ape_sb_append_str(&exports_sb, builder->exported_functions.items[i]);
 			}
 			ape_cmd_append(&cmd, ape_sb_to_str_dup(&exports_sb));
@@ -1073,17 +1242,22 @@ APEBUILD_DEF ApeTaskHandle ape_builder_add_link_task(ApeBuilderHandle handle) {
 	ape_task_set_cmd(task_handle, cmd);
 
 	/* Add to builder's task list */
-	if (builder->tasks.count < APE_MAX_TASKS) { builder->tasks.items[builder->tasks.count++] = task_handle; }
+	if (builder->tasks.count < APE_MAX_TASKS) {
+		builder->tasks.items[builder->tasks.count++] = task_handle;
+	}
 
 	return task_handle;
 }
 
-APEBUILD_DEF ApeTaskHandle ape_builder_add_archive_task(ApeBuilderHandle handle) {
+APEBUILD_DEF ApeTaskHandle ape_builder_add_archive_task(ApeBuilderHandle handle)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return APE_INVALID_TASK;
+	if (!builder)
+		return APE_INVALID_TASK;
 
 	char *output = ape_builder_output_path(handle);
-	if (!output) return APE_INVALID_TASK;
+	if (!output)
+		return APE_INVALID_TASK;
 
 	ApeStrBuilder name_sb = ape_sb_new();
 	ape_sb_append_str(&name_sb, "Archive ");
@@ -1128,34 +1302,46 @@ APEBUILD_DEF ApeTaskHandle ape_builder_add_archive_task(ApeBuilderHandle handle)
 	ape_task_set_cmd(task_handle, cmd);
 
 	/* Add to builder's task list */
-	if (builder->tasks.count < APE_MAX_TASKS) { builder->tasks.items[builder->tasks.count++] = task_handle; }
+	if (builder->tasks.count < APE_MAX_TASKS) {
+		builder->tasks.items[builder->tasks.count++] = task_handle;
+	}
 
 	return task_handle;
 }
 
-APEBUILD_DEF ApeTaskHandle ape_builder_add_command_task(ApeBuilderHandle handle, const char *name, ApeCmd cmd) {
+APEBUILD_DEF ApeTaskHandle ape_builder_add_command_task(ApeBuilderHandle handle, const char *name, ApeCmd cmd)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return APE_INVALID_TASK;
+	if (!builder)
+		return APE_INVALID_TASK;
 
 	ApeTaskHandle task_handle = ape_task_new(handle, APE_TASK_TYPE_COMMAND, name);
 	ape_task_set_cmd(task_handle, cmd);
 
 	/* Add to builder's task list */
-	if (builder->tasks.count < APE_MAX_TASKS) { builder->tasks.items[builder->tasks.count++] = task_handle; }
+	if (builder->tasks.count < APE_MAX_TASKS) {
+		builder->tasks.items[builder->tasks.count++] = task_handle;
+	}
 
 	return task_handle;
 }
 
-APEBUILD_DEF void ape_builder_generate_tasks(ApeBuilderHandle handle) {
+APEBUILD_DEF void ape_builder_generate_tasks(ApeBuilderHandle handle)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return;
+	if (!builder)
+		return;
 
 	/* Clear existing tasks */
-	for (size_t i = 0; i < builder->tasks.count; i++) { ape_task_free(builder->tasks.items[i]); }
+	for (size_t i = 0; i < builder->tasks.count; i++) {
+		ape_task_free(builder->tasks.items[i]);
+	}
 	builder->tasks.count = 0;
 
 	/* Create compile tasks for each source */
-	for (size_t i = 0; i < builder->sources.count; i++) { ape_builder_add_compile_task(handle, builder->sources.items[i]); }
+	for (size_t i = 0; i < builder->sources.count; i++) {
+		ape_builder_add_compile_task(handle, builder->sources.items[i]);
+	}
 
 	/* Create link/archive task if not object-only */
 	if (builder->type != APE_TARGET_OBJECT) {
@@ -1172,7 +1358,8 @@ APEBUILD_DEF void ape_builder_generate_tasks(ApeBuilderHandle handle) {
  * Build Context Implementation
  * ============================================================================ */
 
-APEBUILD_DEF void ape_ctx_init(ApeBuildCtx *ctx) {
+APEBUILD_DEF void ape_ctx_init(ApeBuildCtx *ctx)
+{
 	ape_build_init();
 	memset(ctx, 0, sizeof(ApeBuildCtx));
 
@@ -1182,44 +1369,71 @@ APEBUILD_DEF void ape_ctx_init(ApeBuildCtx *ctx) {
 	ctx->verbosity = APE_VERBOSE_NORMAL;
 }
 
-APEBUILD_DEF void ape_ctx_cleanup(ApeBuildCtx *ctx) {
-	if (!ctx) return;
+APEBUILD_DEF void ape_ctx_cleanup(ApeBuildCtx *ctx)
+{
+	if (!ctx)
+		return;
 
 	/* Note: We don't free the toolchain here since it's in global storage */
 	APEBUILD_FREE(ctx->output_dir);
 	memset(ctx, 0, sizeof(ApeBuildCtx));
 }
 
-APEBUILD_DEF void ape_ctx_set_toolchain(ApeBuildCtx *ctx, ApeToolchainHandle tc) { ctx->toolchain = tc; }
+APEBUILD_DEF void ape_ctx_set_toolchain(ApeBuildCtx *ctx, ApeToolchainHandle tc)
+{
+	ctx->toolchain = tc;
+}
 
-APEBUILD_DEF void ape_ctx_set_output_dir(ApeBuildCtx *ctx, const char *dir) {
+APEBUILD_DEF void ape_ctx_set_output_dir(ApeBuildCtx *ctx, const char *dir)
+{
 	APEBUILD_FREE(ctx->output_dir);
 	ctx->output_dir = ape_str_dup(dir);
 }
 
-APEBUILD_DEF void ape_ctx_set_parallel(ApeBuildCtx *ctx, int jobs) { ctx->parallel_jobs = jobs; }
+APEBUILD_DEF void ape_ctx_set_parallel(ApeBuildCtx *ctx, int jobs)
+{
+	ctx->parallel_jobs = jobs;
+}
 
-APEBUILD_DEF void ape_ctx_set_verbosity(ApeBuildCtx *ctx, ApeVerbosity level) { ctx->verbosity = level; }
+APEBUILD_DEF void ape_ctx_set_verbosity(ApeBuildCtx *ctx, ApeVerbosity level)
+{
+	ctx->verbosity = level;
+}
 
-APEBUILD_DEF void ape_ctx_set_force_rebuild(ApeBuildCtx *ctx, int force) { ctx->force_rebuild = force; }
+APEBUILD_DEF void ape_ctx_set_force_rebuild(ApeBuildCtx *ctx, int force)
+{
+	ctx->force_rebuild = force;
+}
 
-APEBUILD_DEF void ape_ctx_set_dry_run(ApeBuildCtx *ctx, int dry_run) { ctx->dry_run = dry_run; }
+APEBUILD_DEF void ape_ctx_set_dry_run(ApeBuildCtx *ctx, int dry_run)
+{
+	ctx->dry_run = dry_run;
+}
 
-APEBUILD_DEF void ape_ctx_set_keep_going(ApeBuildCtx *ctx, int keep_going) { ctx->keep_going = keep_going; }
+APEBUILD_DEF void ape_ctx_set_keep_going(ApeBuildCtx *ctx, int keep_going)
+{
+	ctx->keep_going = keep_going;
+}
 
-APEBUILD_DEF ApeToolchainHandle ape_ctx_get_toolchain(ApeBuildCtx *ctx) { return ctx->toolchain; }
+APEBUILD_DEF ApeToolchainHandle ape_ctx_get_toolchain(ApeBuildCtx *ctx)
+{
+	return ctx->toolchain;
+}
 
 /* ============================================================================
  * Build Operations
  * ============================================================================ */
 
-APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx *ctx) {
+APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx *ctx)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return APEBUILD_FALSE;
+	if (!builder)
+		return APEBUILD_FALSE;
 
 	ApeVerbosity verbosity = ctx ? ctx->verbosity : APE_VERBOSE_NORMAL;
 	int max_parallel = ctx ? ctx->parallel_jobs : 0;
-	if (max_parallel <= 0) max_parallel = ape_build_get_cpu_count();
+	if (max_parallel <= 0)
+		max_parallel = ape_build_get_cpu_count();
 
 	/* Simple task scheduler using handle lists */
 	ApeTaskHandleList pending = { 0 };
@@ -1227,7 +1441,9 @@ APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx 
 	int completed = 0, failed = 0, skipped = 0;
 
 	/* Add all tasks to pending */
-	for (size_t i = 0; i < builder->tasks.count; i++) { pending.items[pending.count++] = builder->tasks.items[i]; }
+	for (size_t i = 0; i < builder->tasks.count; i++) {
+		pending.items[pending.count++] = builder->tasks.items[i];
+	}
 
 	while (pending.count > 0 || running.count > 0) {
 		/* Check for completed tasks */
@@ -1235,7 +1451,8 @@ APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx 
 			ApeTask *task = ape_task_get(running.items[i]);
 			if (!task) {
 				/* Remove invalid task */
-				for (size_t j = i; j < running.count - 1; j++) running.items[j] = running.items[j + 1];
+				for (size_t j = i; j < running.count - 1; j++)
+					running.items[j] = running.items[j + 1];
 				running.count--;
 				continue;
 			}
@@ -1259,7 +1476,8 @@ APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx 
 				task->proc = APE_INVALID_HANDLE;
 
 				/* Remove from running */
-				for (size_t j = i; j < running.count - 1; j++) running.items[j] = running.items[j + 1];
+				for (size_t j = i; j < running.count - 1; j++)
+					running.items[j] = running.items[j + 1];
 				running.count--;
 
 				/* If not keep_going and a task failed, exit early after draining running tasks */
@@ -1282,7 +1500,9 @@ APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx 
 					/* Mark all pending tasks as failed */
 					for (size_t p = 0; p < pending.count; p++) {
 						ApeTask *pt = ape_task_get(pending.items[p]);
-						if (pt && pt->status == APE_TASK_PENDING) { pt->status = APE_TASK_FAILED; }
+						if (pt && pt->status == APE_TASK_PENDING) {
+							pt->status = APE_TASK_FAILED;
+						}
 					}
 					if (verbosity >= APE_VERBOSE_NORMAL) {
 						ape_log_failure("%s: %d failed, %d compiled, %d skipped", builder->name, failed, completed,
@@ -1308,18 +1528,23 @@ APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx 
 				}
 			}
 
-			if (ready_handle == APE_INVALID_TASK) break;
+			if (ready_handle == APE_INVALID_TASK)
+				break;
 
 			ApeTask *task = ape_task_get(ready_handle);
-			if (!task) break;
+			if (!task)
+				break;
 
 			/* Check if rebuild needed */
 			if (!ctx->force_rebuild && !ape_task_needs_rebuild(ready_handle)) {
 				task->status = APE_TASK_SKIPPED;
 				skipped++;
-				if (verbosity >= APE_VERBOSE_VERBOSE) { ape_log_debug("Skipping %s (up to date)", task->name); }
+				if (verbosity >= APE_VERBOSE_VERBOSE) {
+					ape_log_debug("Skipping %s (up to date)", task->name);
+				}
 				/* Remove from pending */
-				for (size_t j = ready_idx; j < pending.count - 1; j++) pending.items[j] = pending.items[j + 1];
+				for (size_t j = ready_idx; j < pending.count - 1; j++)
+					pending.items[j] = pending.items[j + 1];
 				pending.count--;
 				continue;
 			}
@@ -1346,7 +1571,8 @@ APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx 
 				task->exit_code = 0;
 				completed++;
 				/* Remove from pending */
-				for (size_t j = ready_idx; j < pending.count - 1; j++) pending.items[j] = pending.items[j + 1];
+				for (size_t j = ready_idx; j < pending.count - 1; j++)
+					pending.items[j] = pending.items[j + 1];
 				pending.count--;
 				continue;
 			}
@@ -1357,7 +1583,9 @@ APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx 
 				task->status = APE_TASK_FAILED;
 				task->exit_code = -1;
 				failed++;
-				if (verbosity >= APE_VERBOSE_NORMAL) { ape_log_failure("%s failed to start", task->name); }
+				if (verbosity >= APE_VERBOSE_NORMAL) {
+					ape_log_failure("%s failed to start", task->name);
+				}
 				if (!ctx || !ctx->keep_going) {
 					/* Wait for running tasks */
 					while (running.count > 0) {
@@ -1382,12 +1610,15 @@ APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx 
 			}
 
 			/* Remove from pending */
-			for (size_t j = ready_idx; j < pending.count - 1; j++) pending.items[j] = pending.items[j + 1];
+			for (size_t j = ready_idx; j < pending.count - 1; j++)
+				pending.items[j] = pending.items[j + 1];
 			pending.count--;
 		}
 
 		/* Short sleep if tasks are running */
-		if (running.count > 0) { usleep(10000); }
+		if (running.count > 0) {
+			usleep(10000);
+		}
 	}
 
 	if (verbosity >= APE_VERBOSE_NORMAL) {
@@ -1401,11 +1632,14 @@ APEBUILD_PRIVATE int ape_builder_run_tasks(ApeBuilderHandle handle, ApeBuildCtx 
 	return failed == 0 ? APEBUILD_TRUE : APEBUILD_FALSE;
 }
 
-APEBUILD_DEF int ape_builder_build(ApeBuilderHandle handle) {
+APEBUILD_DEF int ape_builder_build(ApeBuilderHandle handle)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return APEBUILD_FALSE;
+	if (!builder)
+		return APEBUILD_FALSE;
 
-	if (builder->built) return builder->build_failed ? APEBUILD_FALSE : APEBUILD_TRUE;
+	if (builder->built)
+		return builder->build_failed ? APEBUILD_FALSE : APEBUILD_TRUE;
 
 	/* We need a context for output_dir - create a temporary one if builder has no toolchain set */
 	ApeBuildCtx temp_ctx;
@@ -1413,7 +1647,9 @@ APEBUILD_DEF int ape_builder_build(ApeBuilderHandle handle) {
 	ape_ctx_init(ctx);
 
 	/* Use builder's toolchain if set, otherwise use context's default */
-	if (ape_toolchain_valid(builder->toolchain)) { ctx->toolchain = builder->toolchain; }
+	if (ape_toolchain_valid(builder->toolchain)) {
+		ctx->toolchain = builder->toolchain;
+	}
 
 	/* Use builder's output_dir if set */
 	if (builder->output_dir) {
@@ -1435,20 +1671,25 @@ APEBUILD_DEF int ape_builder_build(ApeBuilderHandle handle) {
 
 	/* Ensure output directory exists */
 	const char *output_dir = builder->output_dir ? builder->output_dir : ctx->output_dir;
-	if (!output_dir) output_dir = "build";
+	if (!output_dir)
+		output_dir = "build";
 	ape_fs_mkdir_p(output_dir);
 
 	/* Generate tasks */
 	ape_builder_generate_tasks(handle);
 
 	if (builder->tasks.count == 0) {
-		if (verbosity >= APE_VERBOSE_NORMAL) { ape_log_info("Nothing to build for %s", builder->name); }
+		if (verbosity >= APE_VERBOSE_NORMAL) {
+			ape_log_info("Nothing to build for %s", builder->name);
+		}
 		builder->built = 1;
 		ape_ctx_cleanup(ctx);
 		return APEBUILD_TRUE;
 	}
 
-	if (verbosity >= APE_VERBOSE_NORMAL) { ape_log_build("Building %s...", builder->name); }
+	if (verbosity >= APE_VERBOSE_NORMAL) {
+		ape_log_build("Building %s...", builder->name);
+	}
 
 	int result = ape_builder_run_tasks(handle, ctx);
 
@@ -1459,32 +1700,44 @@ APEBUILD_DEF int ape_builder_build(ApeBuilderHandle handle) {
 	return result;
 }
 
-APEBUILD_DEF int ape_ctx_build(ApeBuildCtx *ctx, ApeBuilderHandle handle) {
+APEBUILD_DEF int ape_ctx_build(ApeBuildCtx *ctx, ApeBuilderHandle handle)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return APEBUILD_FALSE;
+	if (!builder)
+		return APEBUILD_FALSE;
 
 	/* Set builder's toolchain from context if not already set */
-	if (!ape_toolchain_valid(builder->toolchain)) { builder->toolchain = ctx->toolchain; }
+	if (!ape_toolchain_valid(builder->toolchain)) {
+		builder->toolchain = ctx->toolchain;
+	}
 
 	/* Set builder's output_dir from context if not already set */
-	if (!builder->output_dir && ctx->output_dir) { builder->output_dir = ape_str_dup(ctx->output_dir); }
+	if (!builder->output_dir && ctx->output_dir) {
+		builder->output_dir = ape_str_dup(ctx->output_dir);
+	}
 
 	return ape_builder_build(handle);
 }
 
-APEBUILD_DEF int ape_builder_clean(ApeBuilderHandle handle) {
+APEBUILD_DEF int ape_builder_clean(ApeBuilderHandle handle)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (!builder) return APEBUILD_FALSE;
+	if (!builder)
+		return APEBUILD_FALSE;
 
 	/* Remove output */
 	char *output = ape_builder_output_path(handle);
-	if (output && ape_fs_exists(output)) { ape_fs_remove(output); }
+	if (output && ape_fs_exists(output)) {
+		ape_fs_remove(output);
+	}
 	APEBUILD_FREE(output);
 
 	/* Remove object files */
 	for (size_t i = 0; i < builder->sources.count; i++) {
 		char *obj = ape_build_obj_path(NULL, handle, builder->sources.items[i]);
-		if (obj && ape_fs_exists(obj)) { ape_fs_remove(obj); }
+		if (obj && ape_fs_exists(obj)) {
+			ape_fs_remove(obj);
+		}
 		APEBUILD_FREE(obj);
 	}
 
@@ -1494,19 +1747,23 @@ APEBUILD_DEF int ape_builder_clean(ApeBuilderHandle handle) {
 	return APEBUILD_TRUE;
 }
 
-APEBUILD_DEF int ape_ctx_clean(ApeBuildCtx *ctx, ApeBuilderHandle handle) {
+APEBUILD_DEF int ape_ctx_clean(ApeBuildCtx *ctx, ApeBuilderHandle handle)
+{
 	(void)ctx;
 	return ape_builder_clean(handle);
 }
 
-APEBUILD_DEF int ape_builder_rebuild(ApeBuilderHandle handle) {
+APEBUILD_DEF int ape_builder_rebuild(ApeBuilderHandle handle)
+{
 	ape_builder_clean(handle);
 	ApeBuilder *builder = ape_builder_get(handle);
-	if (builder) builder->built = 0;
+	if (builder)
+		builder->built = 0;
 	return ape_builder_build(handle);
 }
 
-APEBUILD_DEF int ape_ctx_rebuild(ApeBuildCtx *ctx, ApeBuilderHandle handle) {
+APEBUILD_DEF int ape_ctx_rebuild(ApeBuildCtx *ctx, ApeBuilderHandle handle)
+{
 	ape_ctx_clean(ctx, handle);
 	return ape_ctx_build(ctx, handle);
 }
@@ -1515,18 +1772,25 @@ APEBUILD_DEF int ape_ctx_rebuild(ApeBuildCtx *ctx, ApeBuilderHandle handle) {
  * Utility Functions
  * ============================================================================ */
 
-APEBUILD_DEF char *ape_build_obj_path(ApeBuildCtx *ctx, ApeBuilderHandle handle, const char *source) {
+APEBUILD_DEF char *ape_build_obj_path(ApeBuildCtx *ctx, ApeBuilderHandle handle, const char *source)
+{
 	ApeBuilder *builder = ape_builder_get(handle);
 
 	ApeToolchain *tc = NULL;
-	if (builder) tc = ape_toolchain_get(builder->toolchain);
-	if (!tc && ctx) tc = ape_toolchain_get(ctx->toolchain);
-	if (!tc) return NULL;
+	if (builder)
+		tc = ape_toolchain_get(builder->toolchain);
+	if (!tc && ctx)
+		tc = ape_toolchain_get(ctx->toolchain);
+	if (!tc)
+		return NULL;
 
 	const char *output_dir = NULL;
-	if (builder) output_dir = builder->output_dir;
-	if (!output_dir && ctx) output_dir = ctx->output_dir;
-	if (!output_dir) output_dir = "build";
+	if (builder)
+		output_dir = builder->output_dir;
+	if (!output_dir && ctx)
+		output_dir = ctx->output_dir;
+	if (!output_dir)
+		output_dir = "build";
 
 	char *stem = ape_fs_stem(source);
 	char *dir = ape_fs_dirname(source);
@@ -1554,15 +1818,18 @@ APEBUILD_DEF char *ape_build_obj_path(ApeBuildCtx *ctx, ApeBuilderHandle handle,
 	return result;
 }
 
-APEBUILD_DEF char *ape_build_output_path(ApeBuildCtx *ctx, ApeBuilderHandle handle) {
+APEBUILD_DEF char *ape_build_output_path(ApeBuildCtx *ctx, ApeBuilderHandle handle)
+{
 	(void)ctx;
 	return ape_builder_output_path(handle);
 }
 
-APEBUILD_DEF int ape_build_get_cpu_count(void) {
+APEBUILD_DEF int ape_build_get_cpu_count(void)
+{
 #ifdef _SC_NPROCESSORS_ONLN
 	long count = sysconf(_SC_NPROCESSORS_ONLN);
-	if (count > 0) return (int)count;
+	if (count > 0)
+		return (int)count;
 #endif
 	return 4; /* Default fallback */
 }
@@ -1571,9 +1838,13 @@ APEBUILD_DEF int ape_build_get_cpu_count(void) {
  * Auto-rebuild Support
  * ============================================================================ */
 
-APEBUILD_DEF int ape_self_needs_rebuild(const char *binary, const char *source) { return ape_fs_needs_rebuild1(binary, source); }
+APEBUILD_DEF int ape_self_needs_rebuild(const char *binary, const char *source)
+{
+	return ape_fs_needs_rebuild1(binary, source);
+}
 
-APEBUILD_DEF int ape_self_rebuild(int argc, char **argv, const char *source) {
+APEBUILD_DEF int ape_self_rebuild(int argc, char **argv, const char *source)
+{
 	const char *binary = argv[0];
 
 	ape_log_info("Build script changed, rebuilding...");
@@ -1618,7 +1889,9 @@ APEBUILD_DEF int ape_self_rebuild(int argc, char **argv, const char *source) {
 	ape_log_info("Re-executing build script...");
 
 	ApeCmd run_cmd = ape_cmd_new();
-	for (int i = 0; i < argc; i++) { ape_cmd_append(&run_cmd, argv[i]); }
+	for (int i = 0; i < argc; i++) {
+		ape_cmd_append(&run_cmd, argv[i]);
+	}
 
 	result = ape_cmd_run_status(&run_cmd);
 	ape_cmd_free(&run_cmd);
