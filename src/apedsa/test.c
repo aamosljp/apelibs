@@ -482,6 +482,40 @@ TEST(shm_string_values)
 	return PASSED;
 }
 
+size_t custom_hash_bytes(void *key, size_t key_size, size_t seed)
+{
+	size_t hash = 0;
+	for (size_t i = 0; i < key_size; i++) {
+		hash = hash * 31 + *((char *)key + i);
+	}
+	return hash;
+}
+
+size_t custom_hash_string(char *key, size_t seed)
+{
+	size_t hash = 0;
+	for (size_t i = 0; i < strlen(key); i++) {
+		hash = hash * 31 + key[i];
+	}
+	return hash;
+}
+
+TEST(hm_custom_hash)
+{
+	size_t seed = 0x31415926;
+	Ki *map = NULL;
+	apedsa_hashmap_set_hash_fns(map, custom_hash_bytes, custom_hash_string);
+	int k;
+	k = 1, apedsa_hm_put(map, k, 100);
+	k = 2, apedsa_hm_put(map, k, 200);
+	k = 3, apedsa_hm_put(map, k, 300);
+	k = 2, apedsa_hm_del(map, k);
+	ASSERT_EQ(apedsa_hm_len(map), 2);
+	ASSERT_EQ((k = 1, apedsa_hm_get(map, k)), 100);
+	ASSERT_EQ((k = 3, apedsa_hm_get(map, k)), 300);
+	return PASSED;
+}
+
 static void run_hm_tests(void)
 {
 	LOG_INFO("HM tests:");
@@ -508,6 +542,7 @@ static void run_hm_tests(void)
 	RUN_TEST(hm_put_batch);
 	RUN_TEST(shm_put_batch);
 	RUN_TEST(shm_string_values);
+	RUN_TEST(hm_custom_hash);
 }
 
 int main(void)

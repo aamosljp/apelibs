@@ -2,7 +2,7 @@
 #define APEDSA_INCLUDED
 
 #define APEDSA_VERSION_MAJOR 0
-#define APEDSA_VERSION_MINOR 1
+#define APEDSA_VERSION_MINOR 2
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #define APEDSA_WINDOWS
@@ -51,7 +51,7 @@ extern "C" {
 /// Set random seed for hash
 extern void apedsa_rand_seed(size_t seed);
 
-// Hash function used internally
+// Hash function used internally, returns 128-bit hash into out
 extern void apedsa_da_murmurhash3_128(const void *key, size_t len, size_t seed, void *out);
 /// This one just calls murmurhash and discards the unused bits
 extern size_t apedsa_hash_bytes(void *p, size_t len, size_t seed);
@@ -62,6 +62,11 @@ extern size_t apedsa_hash_string(char *str, size_t seed);
 typedef struct ApedsaStringArena ApedsaStringArena;
 extern char *apedsa_string_arena_alloc(ApedsaStringArena *arena, char *str);
 extern void apedsa_string_arena_reset(ApedsaStringArena *arena);
+
+// if you want to use custom hash functions
+typedef size_t (*ApedsaHashBytesFn)(void *key, size_t key_size, size_t seed);
+typedef size_t (*ApedsaHashStringFn)(char *key, size_t seed);
+extern void apedsa_hashmap_set_hash_fns(void *a, ApedsaHashBytesFn bytes_fn, ApedsaHashStringFn string_fn);
 
 ////////
 // Private implementation functions, should only be used internally
@@ -82,7 +87,7 @@ extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_
 #if defined(__GNUC__) || defined(__clang__)
 #define __APEDSA_HASH_TYPEOF
 #ifdef __cplusplus
-// #define __APEDSA_HAS_LITERAL_ARRAY
+#define __APEDSA_HAS_LITERAL_ARRAY
 #endif
 #endif
 
@@ -188,7 +193,6 @@ typedef struct {
 	size_t count;
 	void *aux;	// a pointer to either a hashmap or a btree (depending on type)
 	ptrdiff_t temp; // stores temporary values for hashmap and btree
-	enum { APEDSA_TYPE_HASHMAP, APEDSA_TYPE_BTREE } type;
 } ApedsaDaHeader;
 
 typedef struct ApedsaStringBlock {
@@ -205,10 +209,6 @@ struct ApedsaStringArena {
 enum {
 	APEDSA_HASHMAP_MODE_BINARY,
 	APEDSA_HASHMAP_MODE_STRING,
-};
-enum {
-	APEDSA_BTREE_MODE_BINARY,
-	APEDSA_BTREE_MODE_STRING,
 };
 
 // These wrappers allow us to work in C++ as well

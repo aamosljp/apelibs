@@ -16,7 +16,6 @@ void *__apedsa_da_growf(void *da, size_t esz, size_t growby, size_t min_cap)
 	if (da == NULL) {
 		apedsa_da_header(new_da)->count = 0;
 		apedsa_da_header(new_da)->aux = NULL;
-		apedsa_da_header(new_da)->type = 0;
 	}
 	apedsa_da_header(new_da)->capacity = min_cap;
 	return new_da;
