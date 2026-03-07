@@ -81,6 +81,8 @@ dep_libs=("${!visited_deps[@]}")
 # Build include paths
 # ============================================================================
 
+warnings="-Wall"
+
 include_flags="-Isrc/$lib_name"
 for dep in "${dep_libs[@]}"; do
     include_flags="$include_flags -Isrc/$dep"
@@ -114,7 +116,7 @@ if [[ "$has_cpp" == "1" ]]; then
                 continue
             fi
         fi
-        run_command "$CXX $include_flags -fPIC -c $f -o ${f/.cpp/.o}"
+        run_command "$CXX $include_flags $warnings -fPIC -c $f -o ${f/.cpp/.o}"
         objfiles+=("${f/.cpp/.o}")
     done
 
@@ -125,7 +127,7 @@ if [[ "$has_cpp" == "1" ]]; then
 else
     # C path: compile each .c file into the shared library
     build_c_file() {
-        run_command "$CC $include_flags -fPIC -c $1 -o ${1/.c/.o}"
+        run_command "$CC $include_flags $warnings -fPIC -c $1 -o ${1/.c/.o}"
     }
 
     objfiles=()

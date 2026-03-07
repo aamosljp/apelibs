@@ -41,6 +41,8 @@
 #endif
 #endif
 
+#define APEDSA_UNUSED(x) (void)(x)
+
 #include <stddef.h>
 #include <stdbool.h>
 

@@ -484,6 +484,7 @@ TEST(shm_string_values)
 
 size_t custom_hash_bytes(void *key, size_t key_size, size_t seed)
 {
+	APEDSA_UNUSED(seed);
 	size_t hash = 0;
 	for (size_t i = 0; i < key_size; i++) {
 		hash = hash * 31 + *((char *)key + i);
@@ -493,6 +494,7 @@ size_t custom_hash_bytes(void *key, size_t key_size, size_t seed)
 
 size_t custom_hash_string(char *key, size_t seed)
 {
+	APEDSA_UNUSED(seed);
 	size_t hash = 0;
 	for (size_t i = 0; i < strlen(key); i++) {
 		hash = hash * 31 + key[i];
@@ -503,6 +505,7 @@ size_t custom_hash_string(char *key, size_t seed)
 TEST(hm_custom_hash)
 {
 	size_t seed = 0x31415926;
+	APEDSA_UNUSED(seed);
 	Ki *map = NULL;
 	apedsa_hashmap_set_hash_fns(map, custom_hash_bytes, custom_hash_string);
 	int k;

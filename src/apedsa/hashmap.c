@@ -24,6 +24,14 @@ APEDSA_PRIVATE inline uint32_t __apedsa_fmix32(uint32_t h)
 	return h;
 }
 
+#if defined(__cplusplus) && __cplusplus >= 201703L
+#define __APEDSA_FALLTHROUGH [[fallthrough]]
+#elif defined(__GNUC__) && __GNUC__ >= 7 || defined(__clang__)
+#define __APEDSA_FALLTHROUGH __attribute__((fallthrough))
+#else
+#define __APEDSA_FALLTHROUGH
+#endif
+
 APEDSA_DEF void apedsa_da_murmurhash3_128(const void *key, size_t len, size_t seed, void *out)
 {
 	const unsigned char *data = (const unsigned char *)key;
@@ -59,23 +67,38 @@ APEDSA_DEF void apedsa_da_murmurhash3_128(const void *key, size_t len, size_t se
 	uint32_t k4 = 0;
 	switch (len & 15) {
 			// clang-format off
+        // fall through
         case 15: k4 ^= (uint32_t)tail[14] << 16;
+        // fall through
         case 14: k4 ^= (uint32_t)tail[13] << 8;
+        // fall through
         case 13: k4 ^= (uint32_t)tail[12] << 0;
                  k4 *= c4; k4 = __APEDSA_ROTL32(k4, 18); k4 *= c1; h4 ^= k4;
+        // fall through
         case 12: k3 ^= (uint32_t)tail[11] << 24;
+        // fall through
         case 11: k3 ^= (uint32_t)tail[10] << 16;
+        // fall through
         case 10: k3 ^= (uint32_t)tail[9] << 8;
+        // fall through
         case 9: k3 ^= (uint32_t)tail[8] << 0;
                 k3 *= c3; k3 = __APEDSA_ROTL32(k3, 17); k3 *= c4; h3 ^= k3;
+        // fall through
         case 8: k2 ^= (uint32_t)tail[7] << 24;
+        // fall through
         case 7: k2 ^= (uint32_t)tail[6] << 16;
+        // fall through
         case 6: k2 ^= (uint32_t)tail[5] << 8;
+        // fall through
         case 5: k2 ^= (uint32_t)tail[4] << 0;
                 k2 *= c2; k2 = __APEDSA_ROTL32(k2, 18); k2 *= c3; h2 ^= k2;
+        // fall through
         case 4: k1 ^= (uint32_t)tail[3] << 24;
+        // fall through
         case 3: k1 ^= (uint32_t)tail[2] << 16;
+        // fall through
         case 2: k1 ^= (uint32_t)tail[1] << 8;
+        // fall through
         case 1: k1 ^= (uint32_t)tail[0] << 0; 
                 k1 *= c1; k1 = __APEDSA_ROTL32(k1, 31); k1 *= c2; h1 ^= k1;
 			// clang-format on
@@ -373,12 +396,12 @@ void *__apedsa_hashmap_put_internal_batch(void *a, size_t count, void *pairs, si
 	}
 	size_t old_threshold = table->used_count_threshold;
 	table->used_count_threshold = SIZE_MAX;
-	size_t old_count = apedsa_da_count(a);
+	// size_t old_count = apedsa_da_count(a);
 	// if (mode >= APEDSA_HASHMAP_MODE_STRING) { pairs = *(char **)pairs; }
-	for (int i = 0; i < count; i++) {
+	for (size_t i = 0; i < count; i++) {
 		void *pair = ((char *)pairs + i * kv_size);
 		char *key = mode >= APEDSA_HASHMAP_MODE_STRING ? *(char **)(char *)pair : (char *)pair;
-		char *value = ((char *)pairs + i * kv_size + key_size);
+		// char *value = ((char *)pairs + i * kv_size + key_size);
 		a = __apedsa_hashmap_put_internal(a, key, key_size, kv_size, mode);
 		memcpy((char *)a + (apedsa_da_count(a) - 1) * kv_size, pair, kv_size);
 		table = (ApedsaHashIndex *)apedsa_da_header(a)->aux;
@@ -487,7 +510,7 @@ void *__apedsa_hashmap_del_internal(void *a, void *key, size_t key_size, size_t 
 	table->used_count--;
 	table->tombstone_count++;
 	apedsa_da_temp(a) = 1;
-	APEDSA_ASSERT(table->used_count >= 0);
+	// APEDSA_ASSERT(table->used_count >= 0);
 	b->slots[i].hash = APEDSA_HASHMAP_HASH_DELETED;
 	b->slots[i].index = APEDSA_HASHMAP_INDEX_DELETED;
 	if (old_index != final_index) {

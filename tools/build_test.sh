@@ -76,6 +76,8 @@ dep_libs=("${!visited_deps[@]}")
 # Build all source files (deps first, then the library itself)
 # ============================================================================
 
+warnings="-Wall -Wextra"
+
 # Build include paths: -I for each dep so its headers are found
 include_flags="-Itest"
 for dep in "${dep_libs[@]}"; do
@@ -119,7 +121,7 @@ if [[ "$has_cpp" == "1" ]]; then
                 continue
             fi
         fi
-        run_command "$CXX $cpp_include_flags -D${lib_upper}_IMPLEMENTATION -include include/${lib_name}.h -c $f -o ${f/.cpp/.o}"
+        run_command "$CXX $cpp_include_flags $warnings -D${lib_upper}_IMPLEMENTATION -include include/${lib_name}.h -c $f -o ${f/.cpp/.o}"
         objfiles+=("${f/.cpp/.o}")
     done
 
@@ -130,7 +132,7 @@ else
     # C-only path: compile each .c file individually and link.
     # ----------------------------------------------------------------
     build_c_file() {
-        run_command "$CC $include_flags -c $1 -o ${1/.c/.o}"
+        run_command "$CC $include_flags $warnings -c $1 -o ${1/.c/.o}"
     }
 
     objfiles=()
