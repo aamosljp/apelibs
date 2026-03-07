@@ -59,24 +59,24 @@ APEDSA_DEF void apedsa_da_murmurhash3_128(const void *key, size_t len, size_t se
 	uint32_t k4 = 0;
 	switch (len & 15) {
 			// clang-format off
-        case 15: k4 ^= tail[14] << 16;
-        case 14: k4 ^= tail[13] << 8;
-        case 13: k4 ^= tail[12] << 0;
+        case 15: k4 ^= (uint32_t)tail[14] << 16;
+        case 14: k4 ^= (uint32_t)tail[13] << 8;
+        case 13: k4 ^= (uint32_t)tail[12] << 0;
                  k4 *= c4; k4 = __APEDSA_ROTL32(k4, 18); k4 *= c1; h4 ^= k4;
-        case 12: k3 ^= tail[11] << 24;
-        case 11: k3 ^= tail[10] << 16;
-        case 10: k3 ^= tail[9] << 8;
-        case 9: k3 ^= tail[8] << 0;
+        case 12: k3 ^= (uint32_t)tail[11] << 24;
+        case 11: k3 ^= (uint32_t)tail[10] << 16;
+        case 10: k3 ^= (uint32_t)tail[9] << 8;
+        case 9: k3 ^= (uint32_t)tail[8] << 0;
                 k3 *= c3; k3 = __APEDSA_ROTL32(k3, 17); k3 *= c4; h3 ^= k3;
-        case 8: k2 ^= tail[7] << 24;
-        case 7: k2 ^= tail[6] << 16;
-        case 6: k2 ^= tail[5] << 8;
-        case 5: k2 ^= tail[4] << 0;
+        case 8: k2 ^= (uint32_t)tail[7] << 24;
+        case 7: k2 ^= (uint32_t)tail[6] << 16;
+        case 6: k2 ^= (uint32_t)tail[5] << 8;
+        case 5: k2 ^= (uint32_t)tail[4] << 0;
                 k2 *= c2; k2 = __APEDSA_ROTL32(k2, 18); k2 *= c3; h2 ^= k2;
-        case 4: k1 ^= tail[3] << 24;
-        case 3: k1 ^= tail[2] << 16;
-        case 2: k1 ^= tail[1] << 8;
-        case 1: k1 ^= tail[0] << 0; 
+        case 4: k1 ^= (uint32_t)tail[3] << 24;
+        case 3: k1 ^= (uint32_t)tail[2] << 16;
+        case 2: k1 ^= (uint32_t)tail[1] << 8;
+        case 1: k1 ^= (uint32_t)tail[0] << 0; 
                 k1 *= c1; k1 = __APEDSA_ROTL32(k1, 31); k1 *= c2; h1 ^= k1;
 			// clang-format on
 	}
@@ -200,13 +200,6 @@ ApedsaHashIndex *__apedsa_hashmap_rehash(size_t slot_count, ApedsaHashIndex *old
 		}
 	}
 
-#define __APEDSA_HASHMAP_PROBE_LOOP_I(x)                          \
-	if (bucket->slots[x].hash == APEDSA_HASHMAP_HASH_EMPTY) { \
-		bucket->slots[x].hash = hash;                     \
-		bucket->slots[x].index = ob->slots[j].index;      \
-		goto done;                                        \
-	}
-
 	if (old) {
 		table->used_count = old->used_count;
 		for (size_t i = 0; i < old->slot_count >> APEDSA_HASHMAP_BUCKET_SHIFT; i++) {
@@ -223,24 +216,21 @@ ApedsaHashIndex *__apedsa_hashmap_rehash(size_t slot_count, ApedsaHashIndex *old
 					ApedsaHashBucket *bucket;
 					for (;;) {
 						bucket = &table->buckets[pos >> APEDSA_HASHMAP_BUCKET_SHIFT];
-
-						size_t k = pos & APEDSA_HASHMAP_BUCKET_MASK;
-						__APEDSA_HASHMAP_PROBE_LOOP_I(k);
-						k = (k + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-						__APEDSA_HASHMAP_PROBE_LOOP_I(k);
-						k = (k + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-						__APEDSA_HASHMAP_PROBE_LOOP_I(k);
-						k = (k + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-						__APEDSA_HASHMAP_PROBE_LOOP_I(k);
-						k = (k + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-						__APEDSA_HASHMAP_PROBE_LOOP_I(k);
-						k = (k + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-						__APEDSA_HASHMAP_PROBE_LOOP_I(k);
-						k = (k + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-						__APEDSA_HASHMAP_PROBE_LOOP_I(k);
-						k = (k + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-						__APEDSA_HASHMAP_PROBE_LOOP_I(k);
-
+						for (size_t k = pos & APEDSA_HASHMAP_BUCKET_MASK; k < APEDSA_HASHMAP_BUCKET_SIZE; k++) {
+							if (bucket->slots[k].hash == APEDSA_HASHMAP_HASH_EMPTY) {
+								bucket->slots[k].hash = hash;
+								bucket->slots[k].index = ob->slots[j].index;
+								goto done;
+							}
+						}
+						size_t limit = pos & APEDSA_HASHMAP_BUCKET_MASK;
+						for (size_t k = 0; k < limit; k++) {
+							if (bucket->slots[k].hash == APEDSA_HASHMAP_HASH_EMPTY) {
+								bucket->slots[k].hash = hash;
+								bucket->slots[k].index = ob->slots[j].index;
+								goto done;
+							}
+						}
 						pos += step;
 #if defined(APEDSA_HASHMAP_QUADRATIC_PROBING)
 						step += APEDSA_HASHMAP_BUCKET_SIZE;
@@ -254,7 +244,6 @@ ApedsaHashIndex *__apedsa_hashmap_rehash(size_t slot_count, ApedsaHashIndex *old
 		}
 	}
 	return table;
-#undef __APEDSA_HASHMAP_PROBE_LOOP_I
 }
 
 #define MASK(b) (((size_t)0x1 << (b)) - 1)
@@ -308,36 +297,34 @@ void *__apedsa_hashmap_put_internal(void *a, void *key, size_t key_size, size_t 
 	size_t pos = __apedsa_hashmap_probe_position(hash, table->slot_count);
 	ApedsaHashBucket *bucket;
 
-#define __APEDSA_HASHMAP_PUT_PROBE_LOOP_I(x)                                                                                   \
-	if (bucket->slots[x].hash == hash && __apedsa_is_key_equal(a, key, key_size, kv_size, bucket->slots[x].index, mode)) { \
-		apedsa_da_header(a)->temp = bucket->slots[x].index;                                                            \
-		return a;                                                                                                      \
-	} else if (bucket->slots[x].hash == APEDSA_HASHMAP_HASH_EMPTY) {                                                       \
-		pos = (pos & ~APEDSA_HASHMAP_BUCKET_MASK) + x;                                                                 \
-		goto found_empty_slot;                                                                                         \
-	} else if (tombstone < 0 && bucket->slots[x].index == APEDSA_HASHMAP_INDEX_DELETED) {                                  \
-		tombstone = (ptrdiff_t)((pos & ~APEDSA_HASHMAP_BUCKET_MASK) + x);                                              \
-	}
-
 	for (;;) {
 		bucket = &table->buckets[pos >> APEDSA_HASHMAP_BUCKET_SHIFT];
 
-		size_t i = pos & APEDSA_HASHMAP_BUCKET_MASK;
-		__APEDSA_HASHMAP_PUT_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_PUT_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_PUT_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_PUT_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_PUT_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_PUT_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_PUT_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_PUT_PROBE_LOOP_I(i);
+		for (size_t i = pos & APEDSA_HASHMAP_BUCKET_MASK; i < APEDSA_HASHMAP_BUCKET_SIZE; i++) {
+			if (bucket->slots[i].hash == hash &&
+			    __apedsa_is_key_equal(a, key, key_size, kv_size, bucket->slots[i].index, mode)) {
+				apedsa_da_header(a)->temp = bucket->slots[i].index;
+				return a;
+			} else if (bucket->slots[i].hash == APEDSA_HASHMAP_HASH_EMPTY) {
+				pos = (pos & ~APEDSA_HASHMAP_BUCKET_MASK) + i;
+				goto found_empty_slot;
+			} else if (tombstone < 0 && bucket->slots[i].index == APEDSA_HASHMAP_INDEX_DELETED) {
+				tombstone = (ptrdiff_t)((pos & ~APEDSA_HASHMAP_BUCKET_MASK) + i);
+			}
+		}
+		size_t limit = pos & APEDSA_HASHMAP_BUCKET_MASK;
+		for (size_t i = 0; i < limit; i++) {
+			if (bucket->slots[i].hash == hash &&
+			    __apedsa_is_key_equal(a, key, key_size, kv_size, bucket->slots[i].index, mode)) {
+				apedsa_da_header(a)->temp = bucket->slots[i].index;
+				return a;
+			} else if (bucket->slots[i].hash == APEDSA_HASHMAP_HASH_EMPTY) {
+				pos = (pos & ~APEDSA_HASHMAP_BUCKET_MASK) + i;
+				goto found_empty_slot;
+			} else if (tombstone < 0 && bucket->slots[i].index == APEDSA_HASHMAP_INDEX_DELETED) {
+				tombstone = (ptrdiff_t)((pos & ~APEDSA_HASHMAP_BUCKET_MASK) + i);
+			}
+		}
 
 		pos += step;
 #if defined(APEDSA_HASHMAP_QUADRATIC_PROBING)
@@ -346,7 +333,6 @@ void *__apedsa_hashmap_put_internal(void *a, void *key, size_t key_size, size_t 
 		pos &= (table->slot_count - 1);
 		// __builtin_prefetch(&table->buckets[pos >> APEDSA_HASHMAP_BUCKET_SHIFT], 0, 3);
 	}
-#undef __APEDSA_HASHMAP_PUT_PROBE_LOOP_I
 found_empty_slot:
 	if (tombstone >= 0) {
 		pos = tombstone;
@@ -432,22 +418,23 @@ APEDSA_PRIVATE ptrdiff_t __apedsa_hashmap_find_slot(void *a, void *key, size_t k
 	for (;;) {
 		bucket = &table->buckets[pos >> APEDSA_HASHMAP_BUCKET_SHIFT];
 
-		size_t i = pos & APEDSA_HASHMAP_BUCKET_MASK;
-		__APEDSA_HASHMAP_FIND_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_FIND_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_FIND_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_FIND_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_FIND_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_FIND_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_FIND_PROBE_LOOP_I(i);
-		i = (i + 1) % APEDSA_HASHMAP_BUCKET_SIZE;
-		__APEDSA_HASHMAP_FIND_PROBE_LOOP_I(i);
+		for (size_t i = pos & APEDSA_HASHMAP_BUCKET_MASK; i < APEDSA_HASHMAP_BUCKET_SIZE; i++) {
+			if (bucket->slots[i].hash == hash &&
+			    __apedsa_is_key_equal(a, key, key_size, kv_size, bucket->slots[i].index, mode)) {
+				return (ptrdiff_t)((pos & ~APEDSA_HASHMAP_BUCKET_MASK) + i);
+			} else if (bucket->slots[i].hash == APEDSA_HASHMAP_HASH_EMPTY) {
+				return APEDSA_HASHMAP_INDEX_EMPTY;
+			}
+		}
+		size_t limit = pos & APEDSA_HASHMAP_BUCKET_MASK;
+		for (size_t i = 0; i < limit; i++) {
+			if (bucket->slots[i].hash == hash &&
+			    __apedsa_is_key_equal(a, key, key_size, kv_size, bucket->slots[i].index, mode)) {
+				return (ptrdiff_t)((pos & ~APEDSA_HASHMAP_BUCKET_MASK) + i);
+			} else if (bucket->slots[i].hash == APEDSA_HASHMAP_HASH_EMPTY) {
+				return APEDSA_HASHMAP_INDEX_EMPTY;
+			}
+		}
 
 		pos += step;
 #if defined(APEDSA_HASHMAP_QUADRATIC_PROBING)
@@ -518,8 +505,8 @@ void *__apedsa_hashmap_del_internal(void *a, void *key, size_t key_size, size_t 
 	apedsa_da_header(a)->count--;
 	if (table->used_count < table->used_count_shrink_threshold && table->slot_count > APEDSA_HASHMAP_BUCKET_SIZE)
 		apedsa_da_header(a)->aux = __apedsa_hashmap_rehash(table->slot_count >> 1, table);
-	// else if (table->tombstone_count > table->tombstone_count_threshold)
-	// 	apedsa_da_header(a)->aux = __apedsa_hashmap_rehash(table->slot_count, table);
+	else if (table->tombstone_count > table->tombstone_count_threshold)
+		apedsa_da_header(a)->aux = __apedsa_hashmap_rehash(table->slot_count, table);
 
 	return a;
 }

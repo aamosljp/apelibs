@@ -221,24 +221,17 @@ APEALLOC_DEF void *apealloc_pool_alloc(void *pool, size_t size)
 	if (p->used_block_count >= p->used_block_count_threshold) {
 		apealloc_pool_add_blocks(p, p->block_count * 2);
 	}
-	for (size_t i = 0; i < p->block_count; i++) {
-		ApeallocPoolBlockHeader *block = p->blocks + i;
-		if (block->used_subblock_count >= block->subblock_count) {
-			APEALLOC_LOG_WARN("alloc: block exhausted");
-			return NULL;
-		}
-		for (size_t j = 0; j < block->subblock_count; j++) {
-			ApeallocSubblockHeader *subblock = block->subblocks + j;
-			if (subblock->is_free) {
-				subblock->is_free = 0;
-				block->used_subblock_count++;
-				return subblock->data;
+	ApeallocPoolBlockHeader *block = p->first;
+	while (block) {
+		if (block->first_free) {
+			ApeallocSubblockHeader *subblock = block->first_free;
+			if (subblock->size >= size) {
+				//TODO: split subblock if needed
+				ApeallocSubblockHeader *new_subblock = APEALLOC_MALLOC(sizeof(ApeallocSubblockHeader) + size);
+				new_subblock->is_free = 0;
 			}
 		}
 	}
-	// should never reach here
-	assert(0);
-	return NULL;
 }
 /* END pool.c */
 
