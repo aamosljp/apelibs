@@ -167,9 +167,9 @@ ApedsaHashIndex *__apedsa_hashmap_rehash(size_t slot_count, ApedsaHashIndex *old
 								  APEDSA_CACHE_LINE_SIZE - 1);
 	table->slot_count = slot_count;
 	table->used_count = 0;
-	table->used_count_threshold = slot_count - (slot_count >> 2);
-	table->tombstone_count_threshold = (slot_count >> 3) + (slot_count >> 4);
-	table->used_count_shrink_threshold = slot_count >> 2;
+	table->used_count_threshold = slot_count * 12 / 16;
+	table->tombstone_count_threshold = slot_count * 2 / 16;
+	table->used_count_shrink_threshold = slot_count * 4 / 16;
 	table->tombstone_count = 0;
 	table->hash_bytes_fn = NULL;
 	table->hash_string_fn = NULL;
@@ -177,6 +177,7 @@ ApedsaHashIndex *__apedsa_hashmap_rehash(size_t slot_count, ApedsaHashIndex *old
 	table->buckets = (ApedsaHashBucket *)(((uintptr_t)(table + 1) + APEDSA_CACHE_LINE_SIZE - 1) & ~(APEDSA_CACHE_LINE_SIZE - 1));
 	if (slot_count <= APEDSA_HASHMAP_BUCKET_SIZE)
 		table->used_count_shrink_threshold = 0;
+	APEDSA_ASSERT(table->used_count_threshold + table->tombstone_count_threshold < slot_count);
 	if (old) {
 		table->string = old->string;
 		table->seed = old->seed;
@@ -350,9 +351,9 @@ found_empty_slot:
 	if (tombstone >= 0) {
 		pos = tombstone;
 		table->tombstone_count--;
-	} else {
-		table->used_count++;
 	}
+	table->used_count++;
+
 	ptrdiff_t i = (ptrdiff_t)apedsa_da_count(a);
 	if ((size_t)i + 1 > apedsa_da_cap(a))
 		*(void **)&a = __apedsa_da_growf(a, kv_size, 1, 0);
