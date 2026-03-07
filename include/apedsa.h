@@ -828,8 +828,10 @@ void *__apedsa_hashmap_put_internal_batch(void *a, size_t count, void *pairs, si
 		memset(a, 0, kv_size * count);
 	}
 	ApedsaHashIndex *table = (ApedsaHashIndex *)apedsa_da_header(a)->aux;
+	size_t existiing = table ? table->used_count : 0;
+	size_t needed = count + existiing;
 	size_t new_slot_count = table ? table->slot_count : APEDSA_HASHMAP_BUCKET_SIZE;
-	while (new_slot_count < count) {
+	while (new_slot_count < count || (needed > new_slot_count - (new_slot_count >> 2))) {
 		new_slot_count *= 2;
 	}
 	if (table == NULL || new_slot_count > table->slot_count) {
@@ -849,7 +851,8 @@ void *__apedsa_hashmap_put_internal_batch(void *a, size_t count, void *pairs, si
 		table = (ApedsaHashIndex *)apedsa_da_header(a)->aux;
 	}
 	if (table->used_count > old_threshold) {
-		a = __apedsa_hashmap_rehash(table->slot_count * 2, table);
+		table = __apedsa_hashmap_rehash(table->slot_count * 2, table);
+		apedsa_da_header(a)->aux = table;
 	}
 	table->used_count_threshold = old_threshold;
 	return a;
