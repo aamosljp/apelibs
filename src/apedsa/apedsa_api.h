@@ -68,7 +68,6 @@ extern void apedsa_string_arena_reset(ApedsaStringArena *arena);
 // if you want to use custom hash functions
 typedef size_t (*ApedsaHashBytesFn)(void *key, size_t key_size, size_t seed);
 typedef size_t (*ApedsaHashStringFn)(char *key, size_t seed);
-extern void apedsa_hashmap_set_hash_fns(void *a, ApedsaHashBytesFn bytes_fn, ApedsaHashStringFn string_fn);
 
 ////////
 // Private implementation functions, should only be used internally
@@ -78,6 +77,7 @@ extern void *__apedsa_hashmap_put_internal(void *a, void *key, size_t key_size, 
 extern void *__apedsa_hashmap_get_internal(void *a, void *key, size_t key_size, size_t kv_size, int mode);
 extern void *__apedsa_hashmap_del_internal(void *a, void *key, size_t key_size, size_t kv_size, size_t koff, int mode);
 extern void *__apedsa_hashmap_put_internal_batch(void *a, size_t count, void *pairs, size_t key_size, size_t kv_size, int mode);
+extern void __apedsa_hashmap_set_hash_fns_internal(void *a, size_t kv_size, ApedsaHashBytesFn bytes_fn, ApedsaHashStringFn string_fn);
 
 extern void *__apedsa_da_growf(void *da, size_t esz, size_t growby, size_t min_cap);
 extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_size);
@@ -139,18 +139,18 @@ extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_
 #define apedsa_hm_put(t, k, v)                                                                                             \
 	((t) = __apedsa_hashmap_put_internal_wrapper((t), APEDSA_ADDRESSOF((t)->key, (k)), sizeof((t)->key), sizeof(*(t)), \
 						     APEDSA_HASHMAP_MODE_BINARY),                                          \
-	 (t)[apedsa_da_temp((t))].key = (k), (t)[apedsa_da_temp((t))].value = (v))
+	 (t)[apedsa_da_temp((t) - 1)].key = (k), (t)[apedsa_da_temp((t) - 1)].value = (v))
 
 #define apedsa_hm_puts(t, s)                                                                                                    \
 	((t) = __apedsa_hashmap_put_internal_wrapper((t), &(s).key, sizeof((s).key), sizeof(*(t)), APEDSA_HASHMAP_MODE_BINARY), \
-	 (t)[apedsa_da_temp(t)] = (s))
+	 (t)[apedsa_da_temp((t) - 1)] = (s))
 
 #define apedsa_hm_geti(t, k)                                                                                                       \
 	((t) = __apedsa_hashmap_get_internal_wrapper((t), (void *)APEDSA_ADDRESSOF((t)->key, (k)), sizeof((t)->key), sizeof(*(t)), \
 						     APEDSA_HASHMAP_MODE_BINARY),                                                  \
-	 apedsa_da_temp(t))
+	 apedsa_da_temp((t) - 1))
 
-#define apedsa_hm_getp(t, k) ((void)apedsa_hm_geti(t, k), &(t)[apedsa_da_temp(t)])
+#define apedsa_hm_getp(t, k) ((void)apedsa_hm_geti(t, k), &(t)[apedsa_da_temp((t) - 1)])
 
 #define apedsa_hm_del(t, k)                                                                                                  \
 	(__apedsa_hashmap_del_internal_wrapper((t), (void *)APEDSA_ADDRESSOF((t)->key, (k)), sizeof((t)->key), sizeof(*(t)), \
@@ -158,27 +158,29 @@ extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_
 
 #define apedsa_hm_gets(t, k) (*apedsa_hm_getp(t, k))
 #define apedsa_hm_get(t, k) (apedsa_hm_getp(t, k)->value)
-#define apedsa_hm_len(t) (apedsa_da_count(t))
+#define apedsa_hm_len(t) ((t) ? (apedsa_da_count((t) - 1) - 1) : 0)
 
 #define apedsa_hm_with_cap(a, n) __apedsa_hashmap_reserve_internal(a, n, sizeof(*(a)))
 
 #define apedsa_hm_put_batch(t, v, n) \
 	((t) = __apedsa_hashmap_put_internal_batch_wrapper((t), (n), (v), sizeof((t)->key), sizeof(*(t)), APEDSA_HASHMAP_MODE_BINARY))
 
-#define apedsa_shm_len(t) (apedsa_da_count(t))
+#define apedsa_hm_set_hash_fns(a, bs, ss) __apedsa_hashmap_set_hash_fns_internal(a, sizeof(*(a)), bs, ss)
+
+#define apedsa_shm_len(t) (apedsa_da_count((t) - 1) - 1)
 
 #define apedsa_shm_put(t, k, v)                                                                                                \
 	((t) = __apedsa_hashmap_put_internal_wrapper((t), (void *)(k), sizeof((k)), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING), \
-	 (t)[apedsa_da_temp(t)].value = (v))
+	 (t)[apedsa_da_temp((t) - 1)].value = (v))
 
 #define apedsa_shm_puts(t, s)                                                                                                  \
 	((t) = __apedsa_hashmap_put_internal_wrapper((t), (s).key, sizeof((s).key), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING), \
-	 (t)[apedsa_da_temp].value = (v))
+	 (t)[apedsa_da_temp((t) - 1)].value = (v))
 
 #define apedsa_shm_geti(t, k)                                                                                                       \
 	((t) = __apedsa_hashmap_get_internal_wrapper((t), (void *)(k), sizeof((t)->key), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING), \
-	 apedsa_da_temp(t))
-#define apedsa_shm_getp(t, k) ((void)apedsa_shm_geti(t, k), &(t)[apedsa_da_temp(t)])
+	 apedsa_da_temp((t) - 1))
+#define apedsa_shm_getp(t, k) ((void)apedsa_shm_geti(t, k), &(t)[apedsa_da_temp((t) - 1)])
 #define apedsa_shm_gets(t, k) (*apedsa_shm_getp(t, k))
 #define apedsa_shm_get(t, k) (apedsa_shm_getp(t, k)->value)
 #define apedsa_shm_del(t, k)                                                                                                      \
@@ -189,6 +191,8 @@ extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_
 
 #define apedsa_shm_put_batch(t, v, n) \
 	((t) = __apedsa_hashmap_put_internal_batch_wrapper((t), (n), (v), sizeof((t)->key), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING))
+
+#define apedsa_shm_set_hash_fns apedsa_hm_set_hash_fns
 
 typedef struct {
 	size_t capacity;
@@ -270,8 +274,8 @@ static T *__apedsa_hashmap_put_internal_batch_wrapper(T *hashmap, size_t count, 
 #define hm_del apedsa_hm_del
 
 #define hm_with_cap apedsa_hm_with_cap
-
 #define hm_put_batch apedsa_hm_put_batch
+#define hm_set_hash_fns apedsa_hm_set_hash_fns
 
 #define shm_len apedsa_shm_len
 #define shm_put apedsa_shm_put
@@ -283,8 +287,8 @@ static T *__apedsa_hashmap_put_internal_batch_wrapper(T *hashmap, size_t count, 
 #define shm_del apedsa_shm_del
 
 #define shm_with_cap apedsa_shm_with_cap
-
 #define shm_put_batch apedsa_shm_put_batch
+#define shm_set_hash_fns apedsa_shm_set_hash_fns
 
 #endif
 

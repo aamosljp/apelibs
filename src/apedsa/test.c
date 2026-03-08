@@ -1,4 +1,4 @@
-#define APEDSA_HASHMAP_DOUBLE_HASHING
+// #define APEDSA_HASHMAP_DOUBLE_HASHING
 #include "test.h"
 #include "apedsa_api.h"
 #include <assert.h>
@@ -232,7 +232,7 @@ TEST(hm_string_nonexistent_key)
 {
 	Kv *map = NULL;
 	apedsa_shm_put(map, "exists", 42);
-	ASSERT_EQ(apedsa_shm_geti(map, "notexists"), -1);
+	ASSERT_EQ(apedsa_shm_get(map, "notexists"), 0);
 	return PASSED;
 }
 
@@ -323,7 +323,7 @@ TEST(hm_int_nonexistent_key)
 	Ki *map = NULL;
 	int k = 100;
 	apedsa_hm_put(map, k, 999);
-	ASSERT_EQ((k = 999, apedsa_hm_geti(map, k)), -1);
+	ASSERT_EQ((k = 999, apedsa_hm_get(map, k)), 0);
 	return PASSED;
 }
 
@@ -507,7 +507,7 @@ TEST(hm_custom_hash)
 	size_t seed = 0x31415926;
 	APEDSA_UNUSED(seed);
 	Ki *map = NULL;
-	apedsa_hashmap_set_hash_fns(map, custom_hash_bytes, custom_hash_string);
+	apedsa_hm_set_hash_fns(map, custom_hash_bytes, custom_hash_string);
 	int k;
 	k = 1, apedsa_hm_put(map, k, 100);
 	k = 2, apedsa_hm_put(map, k, 200);
