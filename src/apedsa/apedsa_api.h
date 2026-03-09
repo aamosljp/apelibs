@@ -82,6 +82,9 @@ extern void __apedsa_hashmap_set_hash_fns_internal(void *a, size_t kv_size, Aped
 extern void *__apedsa_da_growf(void *da, size_t esz, size_t growby, size_t min_cap);
 extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_size);
 
+extern void *__apedsa_hashmap_clear_internal(void *a, size_t kv_size);
+extern void *__apedsa_hashmap_free_internal(void *a, size_t kv_size);
+
 #if defined(__cplusplus)
 }
 #endif
@@ -167,6 +170,9 @@ extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_
 
 #define apedsa_hm_set_hash_fns(a, bs, ss) __apedsa_hashmap_set_hash_fns_internal(a, sizeof(*(a)), bs, ss)
 
+#define apedsa_hm_clear(a) ((a) = __apedsa_hashmap_clear_internal(a, sizeof(*(a))))
+#define apedsa_hm_free(a) ((a) = __apedsa_hashmap_free_internal(a, sizeof(*(a))))
+
 #define apedsa_shm_len(t) (apedsa_da_count((t) - 1) - 1)
 
 #define apedsa_shm_put(t, k, v)                                                                                                \
@@ -193,6 +199,9 @@ extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_
 	((t) = __apedsa_hashmap_put_internal_batch_wrapper((t), (n), (v), sizeof((t)->key), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING))
 
 #define apedsa_shm_set_hash_fns apedsa_hm_set_hash_fns
+
+#define apedsa_shm_clear apedsa_hm_clear
+#define apedsa_shm_free apedsa_hm_free
 
 typedef struct {
 	size_t capacity;
@@ -272,7 +281,8 @@ static T *__apedsa_hashmap_put_internal_batch_wrapper(T *hashmap, size_t count, 
 #define hm_gets apedsa_hm_gets
 #define hm_get apedsa_hm_get
 #define hm_del apedsa_hm_del
-
+#define hm_clear apedsa_hm_clear
+#define hm_free apedsa_hm_free
 #define hm_with_cap apedsa_hm_with_cap
 #define hm_put_batch apedsa_hm_put_batch
 #define hm_set_hash_fns apedsa_hm_set_hash_fns
@@ -285,7 +295,8 @@ static T *__apedsa_hashmap_put_internal_batch_wrapper(T *hashmap, size_t count, 
 #define shm_gets apedsa_shm_gets
 #define shm_get apedsa_shm_get
 #define shm_del apedsa_shm_del
-
+#define shm_clear apedsa_shm_clear
+#define shm_free apedsa_shm_free
 #define shm_with_cap apedsa_shm_with_cap
 #define shm_put_batch apedsa_shm_put_batch
 #define shm_set_hash_fns apedsa_shm_set_hash_fns

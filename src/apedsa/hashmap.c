@@ -586,3 +586,42 @@ void __apedsa_hashmap_set_hash_fns_internal(void *a, size_t kv_size, ApedsaHashB
 	table->hash_bytes_fn = bytes_fn;
 	table->hash_string_fn = string_fn;
 }
+
+void *__apedsa_hashmap_clear_internal(void *a, size_t kv_size)
+{
+	if (a == NULL)
+		return a;
+	char *da = a;
+	a = (char *)a - kv_size;
+	ApedsaHashIndex *table = (ApedsaHashIndex *)apedsa_da_header(a)->aux;
+	if (table == NULL)
+		return da;
+	for (size_t i = 0; i < table->slot_count >> APEDSA_HASHMAP_BUCKET_SHIFT; i++) {
+		ApedsaHashBucket *bucket = &table->buckets[i];
+		for (size_t j = 0; j < APEDSA_HASHMAP_BUCKET_SIZE; j++) {
+			ApedsaHashBucket *b = &table->buckets[i];
+			if (APEDSA_HASHMAP_INDEX_IN_USE(b->slots[j].index)) {
+				b->slots[j].hash = APEDSA_HASHMAP_HASH_EMPTY;
+				b->slots[j].index = APEDSA_HASHMAP_INDEX_EMPTY;
+			}
+		}
+	}
+	table->used_count = 0;
+	apedsa_string_arena_reset(&table->string);
+	table = __apedsa_hashmap_rehash(0, table);
+	apedsa_da_header(a)->aux = table;
+	return (char *)a + kv_size;
+}
+
+void *__apedsa_hashmap_free_internal(void *a, size_t kv_size)
+{
+	if (a == NULL)
+		return a;
+	char *da = a;
+	a = (char *)a - kv_size;
+	ApedsaHashIndex *table = (ApedsaHashIndex *)apedsa_da_header(a)->aux;
+	if (table != NULL)
+		APEDSA_FREE(table);
+	APEDSA_FREE(a);
+	return a;
+}
