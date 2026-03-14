@@ -26,6 +26,42 @@
  */
 
 /*
+ * apelexer.h - v0.1
+ */
+
+#ifndef APELEXER_EXTERNAL_APEDSA
+/* --- embedded apedsa.h begin --- */
+#ifndef APEDSA_IMPLEMENTATION
+#define APEDSA_IMPLEMENTATION
+#endif
+/*
+ * This is free and unencumbered software released into the public domain.
+ * 
+ * Anyone is free to copy, modify, publish, use, compile, sell, or
+ * distribute this software, either in source code form or as a compiled
+ * binary, for any purpose, commercial or non-commercial, and by any
+ * means.
+ * 
+ * In jurisdictions that recognize copyright laws, the author or authors
+ * of this software dedicate any and all copyright interest in the
+ * software to the public domain. We make this dedication for the benefit
+ * of the public at large and to the detriment of our heirs and
+ * successors. We intend this dedication to be an overt act of
+ * relinquishment in perpetuity of all present and future rights to this
+ * software under copyright law.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ * For more information, please refer to <https://unlicense.org>
+ */
+
+/*
  * apedsa.h - v0.2
  *
  * 
@@ -1215,6 +1251,954 @@ APEDSA_DEF void apedsa_string_arena_reset(ApedsaStringArena *arena)
 	memset(arena, 0, sizeof(*arena));
 }
 /* END string.c */
+
+#endif
+
+#endif
+
+/* --- embedded apedsa.h end --- */
+#else
+#include "apedsa.h"
+#endif /* APELEXER_EXTERNAL_APEDSA */
+#ifndef APELEXER_INCLUDED
+#define APELEXER_INCLUDED
+
+#define APELEXER_VERSION_MAJOR 0
+#define APELEXER_VERSION_MINOR 1
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#define APELEXER_WINDOWS
+#if defined(_WIN64)
+#define APELEXER_WINDOWS_X64
+#endif
+#elif defined(__linux__) || defined(__unix__)
+#define APELEXER_LINUX
+#elif defined(__APPLE__)
+#define APELEXER_APPLE
+#endif
+
+#ifndef APELEXER_MALLOC
+#if defined(APELEXER_REALLOC) || defined(APELEXER_FREE)
+#pragma GCC error "Need to define MALLOC, REALLOC and FREE or none of them"
+#else
+#include <stdlib.h>
+#define APELEXER_MALLOC malloc
+#define APELEXER_REALLOC realloc
+#define APELEXER_FREE free
+#endif
+#else
+#if !defined(APELEXER_REALLOC) || !defined(APELEXER_FREE)
+#pragma GCC error "Need to define MALLOC, REALLOC and FREE or none of them"
+#endif
+#endif
+
+#ifndef APELEXER_ASSERT
+#ifdef APELEXER_USE_STDLIB_ASSERT
+#include <assert.h>
+#define APELEXER_ASSERT(c) assert(c)
+#else
+#include <stdio.h>
+#include <stdlib.h>
+#define APELEXER_ASSERT(c)                                                                 \
+	if (!(c)) {                                                                        \
+		fprintf(stderr, "%s:%d Assertion '%s' failed\n", __FILE__, __LINE__, ##c); \
+		exit(1);                                                                   \
+	}
+#endif
+#endif
+
+typedef enum {
+	APELEXER_TOKEN_NONE,
+	APELEXER_TOKEN_KEYWORD,
+	APELEXER_TOKEN_IDENTIFIER,
+	APELEXER_TOKEN_INT,
+	APELEXER_TOKEN_FLOAT,
+	APELEXER_TOKEN_CHAR,
+	APELEXER_TOKEN_STRING,
+	APELEXER_TOKEN_OPERATOR,
+	APELEXER_TOKEN_PREPROCESSOR,
+	APELEXER_TOKEN_OPEN_PAREN,
+	APELEXER_TOKEN_CLOSE_PAREN,
+	APELEXER_TOKEN_OPEN_BRACKET,
+	APELEXER_TOKEN_CLOSE_BRACKET,
+	APELEXER_TOKEN_OPEN_BRACE,
+	APELEXER_TOKEN_CLOSE_BRACE,
+	APELEXER_TOKEN_COMMA,
+	APELEXER_TOKEN_SEMICOLON,
+	APELEXER_TOKEN_COLON,
+	APELEXER_TOKEN_DOT,
+	APELEXER_TOKEN_ARROW,
+	APELEXER_TOKEN_EOF,
+} ApelexerTokenType;
+
+typedef struct ApelexerToken {
+	ApelexerTokenType type;
+	char *value;
+	size_t length;
+	size_t start_line;
+	size_t start_column;
+	size_t end_line;
+	size_t end_column;
+} ApelexerToken;
+
+extern ApelexerToken *apelexer_tokenize(const char *input, size_t *token_count);
+extern char *apelexer_token_type_to_string(ApelexerTokenType type);
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#if defined(__cplusplus)
+}
+#endif
+
+#if defined(APELEXER_STRIP_PREFIX)
+
+#endif
+
+#endif
+
+#ifdef APELEXER_IMPLEMENTATION
+
+#ifndef APELEXER_IMPLEMENTATION_INCLUDED
+#define APELEXER_IMPLEMENTATION_INCLUDED
+
+#include <string.h>
+#include <ctype.h>
+
+/* User can define a custom function prefix (eg. static) */
+#ifndef APELEXER_DEF
+#define APELEXER_DEF
+#endif
+
+/* Can also define custom private function prefix */
+#ifndef APELEXER_PRIVATE
+#define APELEXER_PRIVATE static
+#endif
+
+#ifndef APELEXER_TRUE
+#define APELEXER_TRUE (1)
+#define APELEXER_FALSE (0)
+#else
+#if !defined(APELEXER_FALSE)
+#pragma GCC error "Need to define both APELEXER_TRUE and APELEXER_FALSE or neither"
+#endif
+#endif
+
+/* BEGIN lexer.c */
+
+static const char *apelexer_keywords[] = {
+	// only keywords defined in C99
+	// clang-format off
+    "break",
+    "case",
+    "char",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "long",
+    "register",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unsigned",
+    "void",
+    "volatile",
+    "while",
+	// clang-format on
+};
+
+static const char *apelexer_operator[] = {
+	// clang-format off
+    "+", // done
+    "-", // done
+    "*", // done
+    "/", // done
+    "%", // done
+    "&", // done
+    "|", // done
+    "^", // done
+    "~", // done
+    "!", // done
+    "<<", // done
+    ">>", // done
+    "++", // done
+    "--", // done
+    "<", // done
+    ">", // done
+    "<=", // done
+    ">=", // done
+    "==", // done
+    "!=", // done
+    "&&", // done
+    "||", // done
+    "?", // done
+    "=", // done
+    "+=", // done
+    "-=", // done
+    "*=", // done
+    "/=", // done
+    "%=", // done
+    "&=", // done
+    "|=", // done
+    "^=", // done
+    "<<=", // done
+    ">>=", // done
+	// clang-format on
+};
+
+typedef enum {
+	APELEXER_ERROR_NONE,
+	APELEXER_ERROR_UNEXPECTED_CHAR,
+	APELEXER_ERROR_UNEXPECTED_EOF,
+	APELEXER_ERROR_QUOTED_QUOTE,
+	APELEXER_ERROR_UNEXPECTED_NEWLINE,
+	APELEXER_ERROR_UNTERMINATED_STRING,
+	APELEXER_ERROR_CHAR_TOO_LONG,
+	APELEXER_ERROR_INVALID_FLOAT,
+	APELEXER_ERROR_INVALID_NUMBER,
+	APELEXER_ERROR_INVALID_CHAR,
+} ApelexerErrorType;
+
+#define APELEXER_MAX_TOKEN_LENGTH 128
+
+APELEXER_PRIVATE const char *apelexer_error_type_to_string(ApelexerErrorType type)
+{
+	switch (type) {
+		case APELEXER_ERROR_NONE: return "none";
+		case APELEXER_ERROR_UNEXPECTED_CHAR: return "unexpected char";
+		case APELEXER_ERROR_UNEXPECTED_EOF: return "unexpected eof";
+		case APELEXER_ERROR_QUOTED_QUOTE: return "quoted quote";
+		case APELEXER_ERROR_UNEXPECTED_NEWLINE: return "unexpected newline";
+		case APELEXER_ERROR_UNTERMINATED_STRING: return "unterminated string";
+		case APELEXER_ERROR_CHAR_TOO_LONG: return "char too long";
+		case APELEXER_ERROR_INVALID_FLOAT: return "invalid float";
+		case APELEXER_ERROR_INVALID_NUMBER: return "invalid number";
+	}
+	return "unknown";
+}
+
+APELEXER_PRIVATE void apelexer_error(ApelexerErrorType type, size_t line, size_t column)
+{
+	fprintf(stderr, "apelexer error: %s, at %zu:%zu\n", apelexer_error_type_to_string(type), line, column);
+	exit(1);
+}
+
+APELEXER_DEF char *apelexer_token_type_to_string(ApelexerTokenType type)
+{
+	switch (type) {
+		case APELEXER_TOKEN_NONE: return "none";
+		case APELEXER_TOKEN_KEYWORD: return "keyword";
+		case APELEXER_TOKEN_IDENTIFIER: return "identifier";
+		case APELEXER_TOKEN_INT: return "int";
+		case APELEXER_TOKEN_FLOAT: return "float";
+		case APELEXER_TOKEN_CHAR: return "char";
+		case APELEXER_TOKEN_STRING: return "string";
+		case APELEXER_TOKEN_OPERATOR: return "operator";
+		case APELEXER_TOKEN_PREPROCESSOR: return "preprocessor";
+		case APELEXER_TOKEN_OPEN_PAREN: return "open paren";
+		case APELEXER_TOKEN_CLOSE_PAREN: return "close paren";
+		case APELEXER_TOKEN_OPEN_BRACKET: return "open bracket";
+		case APELEXER_TOKEN_CLOSE_BRACKET: return "close bracket";
+		case APELEXER_TOKEN_OPEN_BRACE: return "open brace";
+		case APELEXER_TOKEN_CLOSE_BRACE: return "close brace";
+		case APELEXER_TOKEN_COMMA: return "comma";
+		case APELEXER_TOKEN_SEMICOLON: return "semicolon";
+		case APELEXER_TOKEN_COLON: return "colon";
+		case APELEXER_TOKEN_DOT: return "dot";
+		case APELEXER_TOKEN_ARROW: return "arrow";
+		case APELEXER_TOKEN_EOF: return "eof";
+	}
+}
+
+APELEXER_DEF ApelexerToken *apelexer_tokenize(const char *input, size_t *token_count)
+{
+	ApelexerToken *tokens = NULL;
+	*token_count = 0;
+	size_t token_capacity = 0;
+	size_t i = 0;
+	size_t line = 1;
+	size_t column = 1;
+	size_t len = strlen(input);
+#define APELEXER_TOKENIZER_PUSH_TOKEN(t, v)                                               \
+	do {                                                                              \
+		if (*token_count + 1 >= token_capacity) {                                 \
+			token_capacity = token_capacity ? token_capacity * 2 : 32;        \
+			tokens = realloc(tokens, sizeof(ApelexerToken) * token_capacity); \
+		}                                                                         \
+		tokens[*token_count].type = t;                                            \
+		tokens[*token_count].value = malloc(strlen(v) + 1);                       \
+		strcpy(tokens[*token_count].value, v);                                    \
+		tokens[*token_count].length = strlen(v);                                  \
+		*token_count = *token_count + 1;                                          \
+	} while (0)
+
+	while (i < len) {
+		if (input[i] == '\0') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_EOF, "EOF");
+		}
+		if (input[i] == '\n' || input[i] == '\r') {
+			line++;
+			column = 1;
+			i++;
+			continue;
+		}
+		if (isspace(input[i])) {
+			column++;
+			i++;
+			continue;
+		}
+		if (input[i] == '"') {
+			i++, column++;
+			size_t start_line = line;
+			size_t start_column = column;
+			size_t start = i;
+			while (i < len) {
+				if (input[i] == '\n' || input[i] == '\r') {
+					if (input[i - 1] != '\\')
+						apelexer_error(APELEXER_ERROR_UNTERMINATED_STRING, line, column);
+					line++, column = 1;
+				}
+				if (input[i] == '"' && input[i - 1] != '\\') {
+					break;
+				}
+				if (input[i] == '\\') {
+					i++, column++;
+					if (i < len && input[i] == 'x') {
+						i += 2, column += 2;
+					} else if (i < len && input[i] == 'u') {
+						for (size_t j = 0; j < 4; j++) {
+							if (!isxdigit(input[i + j])) {
+								apelexer_error(APELEXER_ERROR_INVALID_CHAR, line, column);
+							}
+							i++, column++;
+						}
+					} else if (i < len && input[i] == 'U') {
+						for (size_t j = 0; j < 8; j++) {
+							if (!isxdigit(input[i + j])) {
+								apelexer_error(APELEXER_ERROR_INVALID_CHAR, line, column);
+							}
+							i++, column++;
+						}
+					}
+				}
+				i++, column++;
+			}
+			if (input[i] != '"') {
+				apelexer_error(APELEXER_ERROR_UNTERMINATED_STRING, line, column);
+			}
+			size_t end = i;
+			// end--; // remove the last "
+			char *value = malloc(end - start + 1);
+			memcpy(value, &input[start], end - start);
+			value[end - start] = '\0';
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_STRING, value);
+			tokens[*token_count - 1].start_line = start_line;
+			tokens[*token_count - 1].start_column = start_column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			free(value);
+			continue;
+		}
+		if (input[i] == '\'') {
+			size_t start_line = line;
+			size_t start_column = column;
+			i++, column++;
+			i++, column++;
+			if (input[i] != '\'') {
+				if (input[i - 1] == '\\')
+					i++;
+				else
+					apelexer_error(APELEXER_ERROR_CHAR_TOO_LONG, line, column);
+			}
+			if (input[i] != '\'') {
+				apelexer_error(APELEXER_ERROR_CHAR_TOO_LONG, line, column);
+			}
+			char v[2] = { input[i - 1], '\0' };
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_CHAR, v);
+			tokens[*token_count - 1].start_line = start_line;
+			tokens[*token_count - 1].start_column = start_column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (isdigit(input[i])) {
+			size_t start_line = line;
+			size_t start_column = column;
+			int base = 10;
+			size_t start = i;
+			size_t end = i;
+			int dots = 0;
+			int is_float = 0;
+			if (input[i] == '0' && input[i + 1] == 'x') {
+				i += 2;
+				column += 2;
+				base = 16;
+			} else if (input[i] == '0' && input[i + 1] == 'b') {
+				i += 2;
+				column += 2;
+				base = 2;
+			} else if (input[i] == '0' && input[i + 1] == 'o') {
+				i += 2;
+				column += 2;
+				base = 8;
+			}
+			while (i < len) {
+				// if (isspace(input[i])) {
+				// 	break;
+				// }
+				if (input[i] == '.') {
+					if (base != 10) {
+						apelexer_error(APELEXER_ERROR_INVALID_NUMBER, line, column);
+					}
+					dots++;
+					if (dots > 1) {
+						apelexer_error(APELEXER_ERROR_INVALID_NUMBER, line, column);
+					}
+					is_float = 1;
+					i++, column++;
+					end = i;
+					continue;
+				}
+				if (input[i] == 'e' || input[i] == 'E') {
+					if (base != 10) {
+						apelexer_error(APELEXER_ERROR_INVALID_NUMBER, line, column);
+					}
+					if (end - start < 1) {
+						apelexer_error(APELEXER_ERROR_INVALID_NUMBER, line, column);
+					}
+					i++, column++;
+					end = i;
+					is_float = 1;
+					continue;
+				}
+				if (isdigit(input[i])) {
+					if (base == 8) {
+						if (input[i] > '7') {
+							apelexer_error(APELEXER_ERROR_INVALID_NUMBER, line, column);
+						}
+					} else if (base == 2) {
+						if (input[i] < '2') {
+							apelexer_error(APELEXER_ERROR_INVALID_NUMBER, line, column);
+						}
+					}
+					i++, column++;
+					end = i;
+					continue;
+				}
+				if (isxdigit(input[i])) {
+					if (!isdigit(input[i]) && base != 16) {
+						apelexer_error(APELEXER_ERROR_INVALID_NUMBER, line, column);
+					}
+					if (base == 8) {
+						if (input[i] > '7') {
+							apelexer_error(APELEXER_ERROR_INVALID_NUMBER, line, column);
+						}
+					} else if (base == 2) {
+						if (input[i] < '2') {
+							apelexer_error(APELEXER_ERROR_INVALID_NUMBER, line, column);
+						}
+					}
+					i++, column++;
+					end = i;
+					continue;
+				}
+				break;
+			}
+			char last = input[i - 1];
+			if (last == '.') {
+				apelexer_error(APELEXER_ERROR_INVALID_FLOAT, line, column);
+			}
+			char *value = malloc(end - start + 1);
+			memcpy(value, &input[start], end - start);
+			value[end - start] = '\0';
+			APELEXER_TOKENIZER_PUSH_TOKEN(is_float ? APELEXER_TOKEN_FLOAT : APELEXER_TOKEN_INT, value);
+			tokens[*token_count - 1].start_line = start_line;
+			tokens[*token_count - 1].start_column = start_column;
+			// i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			free(value);
+			continue;
+		}
+		if (input[i] == '#') {
+			if (column != 1) {
+				apelexer_error(APELEXER_ERROR_UNEXPECTED_CHAR, line, column);
+			}
+			size_t start_line = line;
+			size_t start_column = column;
+			size_t start = i;
+			i++, column++;
+			while (i < len) {
+				if (input[i] == '\n' || input[i] == '\r') {
+					if (input[i - 1] != '\\')
+						break;
+				}
+				i++, column++;
+			}
+			char *value = malloc(i - start + 1);
+			memcpy(value, &input[start], i - start);
+			value[i - start] = '\0';
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_PREPROCESSOR, value);
+			tokens[*token_count - 1].start_line = start_line;
+			tokens[*token_count - 1].start_column = start_column;
+			// i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			free(value);
+			continue;
+		}
+		if (input[i] == '(') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPEN_PAREN, "(");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == ')') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_CLOSE_PAREN, ")");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '[') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPEN_BRACKET, "[");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == ']') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_CLOSE_BRACKET, "]");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '{') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPEN_BRACE, "{");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '}') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_CLOSE_BRACE, "}");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == ',') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_COMMA, ",");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == ';') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_SEMICOLON, ";");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == ':') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_COLON, ":");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '.') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_DOT, ".");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '+') {
+			if (i + 1 < len && input[i + 1] == '+') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "++");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			if (i + 1 < len && input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "+=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "+");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '-') {
+			if (i + 1 < len && input[i + 1] == '-') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "--");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			if (i + 1 < len && input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "-=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			if (i + 1 < len && input[i + 1] == '>') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_ARROW, "->");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "-");
+			i++, column++;
+			continue;
+		}
+		if (input[i] == '*') {
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "*=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "*");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '/') {
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "/=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "/");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '%') {
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "%=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "%");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '&') {
+			if (input[i + 1] == '&') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "&&");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "&=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "&");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '|') {
+			if (input[i + 1] == '|') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "||");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "|=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "|");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '<') {
+			if (input[i + 1] == '<') {
+				if (input[i + 2] == '=') {
+					APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "<<=");
+					tokens[*token_count - 1].start_line = line;
+					tokens[*token_count - 1].start_column = column;
+					i += 3, column += 3;
+					tokens[*token_count - 1].end_line = line;
+					tokens[*token_count - 1].end_column = column;
+					continue;
+				}
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "<<");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "<=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "<");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '>') {
+			if (input[i + 1] == '>') {
+				if (input[i + 2] == '=') {
+					APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, ">>=");
+					tokens[*token_count - 1].start_line = line;
+					tokens[*token_count - 1].start_column = column;
+					i += 3, column += 3;
+					tokens[*token_count - 1].end_line = line;
+					tokens[*token_count - 1].end_column = column;
+					continue;
+				}
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, ">>");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, ">=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, ">");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '?') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "?");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '=') {
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "==");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "=");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '!') {
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "!=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "!");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '~') {
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "~");
+			tokens[*token_count - 1].start_line = line;
+			tokens[*token_count - 1].start_column = column;
+			i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			continue;
+		}
+		if (input[i] == '^') {
+			if (input[i + 1] == '=') {
+				APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "^=");
+				tokens[*token_count - 1].start_line = line;
+				tokens[*token_count - 1].start_column = column;
+				i += 2, column += 2;
+				tokens[*token_count - 1].end_line = line;
+				tokens[*token_count - 1].end_column = column;
+				continue;
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(APELEXER_TOKEN_OPERATOR, "^");
+			i++, column++;
+			continue;
+		}
+		if (isalpha(input[i]) || input[i] == '_') {
+			size_t start_line = line;
+			size_t start_column = column;
+			size_t start = i;
+			while (i < len) {
+				if (isalnum(input[i]) || input[i] == '_') {
+					i++, column++;
+					continue;
+				}
+				break;
+			}
+			char *value = malloc(i - start + 1);
+			memcpy(value, &input[start], i - start);
+			value[i - start] = '\0';
+			int is_keyword = 0;
+			for (size_t j = 0; j < sizeof(apelexer_keywords) / sizeof(apelexer_keywords[0]); j++) {
+				if (strcmp(apelexer_keywords[j], value) == 0) {
+					is_keyword = 1;
+					break;
+				}
+			}
+			APELEXER_TOKENIZER_PUSH_TOKEN(is_keyword ? APELEXER_TOKEN_KEYWORD : APELEXER_TOKEN_IDENTIFIER, value);
+			tokens[*token_count - 1].start_line = start_line;
+			tokens[*token_count - 1].start_column = start_column;
+			// i++, column++;
+			tokens[*token_count - 1].end_line = line;
+			tokens[*token_count - 1].end_column = column;
+			free(value);
+			continue;
+		}
+	}
+#undef APELEXER_TOKENIZER_PUSH_TOKEN
+	return tokens;
+}
+/* END lexer.c */
 
 #endif
 

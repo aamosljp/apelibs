@@ -84,6 +84,8 @@ extern void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_
 
 extern void *__apedsa_hashmap_clear_internal(void *a, size_t kv_size);
 extern void *__apedsa_hashmap_free_internal(void *a, size_t kv_size);
+extern float apedsa_hashmap_load_factor(void *a, size_t kv_size);
+extern size_t apedsa_hashmap_tombstone_count(void *a, size_t kv_size);
 
 #if defined(__cplusplus)
 }
@@ -138,6 +140,7 @@ extern void *__apedsa_hashmap_free_internal(void *a, size_t kv_size);
 #define apedsa_da_grow(da, n, min_cap) ((da) = __apedsa_da_growf_wrapper((da), sizeof(*(da)), (n), (min_cap)))
 #define apedsa_da_reserve(da, n) \
 	((!(da) || apedsa_da_header(da)->count + (n) > apedsa_da_header(da)->capacity) ? (apedsa_da_grow(da, n, 0), 0) : 0)
+#define apedsa_da_free(da) ((da) ? apedsa_da_header(da)->count = 0, apedsa_da_header(da)->capacity = 0, APEDSA_FREE(da) : 0)
 
 #define apedsa_hm_put(t, k, v)                                                                                             \
 	((t) = __apedsa_hashmap_put_internal_wrapper((t), APEDSA_ADDRESSOF((t)->key, (k)), sizeof((t)->key), sizeof(*(t)), \
@@ -173,6 +176,9 @@ extern void *__apedsa_hashmap_free_internal(void *a, size_t kv_size);
 #define apedsa_hm_clear(a) ((a) = __apedsa_hashmap_clear_internal(a, sizeof(*(a))))
 #define apedsa_hm_free(a) ((a) = __apedsa_hashmap_free_internal(a, sizeof(*(a))))
 
+#define apedsa_hm_load_factor(a) apedsa_hashmap_load_factor(a, sizeof(*(a)))
+#define apedsa_hm_tombstone_count(a) apedsa_hashmap_tombstone_count(a, sizeof(*(a)))
+
 #define apedsa_shm_len(t) (apedsa_da_count((t) - 1) - 1)
 
 #define apedsa_shm_put(t, k, v)                                                                                                \
@@ -202,6 +208,9 @@ extern void *__apedsa_hashmap_free_internal(void *a, size_t kv_size);
 
 #define apedsa_shm_clear apedsa_hm_clear
 #define apedsa_shm_free apedsa_hm_free
+
+#define apedsa_shm_load_factor(a) apedsa_hashmap_load_factor(a, sizeof(*(a)))
+#define apedsa_shm_tombstone_count(a) apedsa_hashmap_tombstone_count(a, sizeof(*(a)))
 
 typedef struct {
 	size_t capacity;

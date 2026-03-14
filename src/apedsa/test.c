@@ -1,4 +1,5 @@
 // #define APEDSA_HASHMAP_DOUBLE_HASHING
+#define APEDSA_HASHMAP_STATS
 #include "test.h"
 #include "apedsa_api.h"
 #include <assert.h>
@@ -519,6 +520,21 @@ TEST(hm_custom_hash)
 	return PASSED;
 }
 
+TEST(hm_stats)
+{
+	Ki *map = NULL;
+	apedsa_hm_put(map, 1, 100);
+	apedsa_hm_put(map, 2, 200);
+	apedsa_hm_put(map, 3, 300);
+	apedsa_hm_del(map, 2);
+	fprintf(stderr, "%f\n", apedsa_hm_load_factor(map));
+	fprintf(stderr, "%zu\n", apedsa_hm_tombstone_count(map));
+	// ASSERT_EQ(apedsa_hm_len(map), 2);
+	// ASSERT_EQ(apedsa_hm_load_factor(map), 0.5);
+	// ASSERT_EQ(apedsa_hm_tombstone_count(map), 1);
+	return PASSED;
+}
+
 static void run_hm_tests(void)
 {
 	LOG_INFO("HM tests:");
@@ -546,6 +562,7 @@ static void run_hm_tests(void)
 	RUN_TEST(shm_put_batch);
 	RUN_TEST(shm_string_values);
 	RUN_TEST(hm_custom_hash);
+	RUN_TEST(hm_stats);
 }
 
 int main(void)
