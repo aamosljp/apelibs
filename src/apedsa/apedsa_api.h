@@ -159,7 +159,7 @@ extern size_t apedsa_hashmap_tombstone_count(void *a, size_t kv_size);
 #define apedsa_hm_getp(t, k) ((void)apedsa_hm_geti(t, k), &(t)[apedsa_da_temp((t) - 1)])
 
 #define apedsa_hm_del(t, k)                                                                                                  \
-	(__apedsa_hashmap_del_internal_wrapper((t), (void *)APEDSA_ADDRESSOF((t)->key, (k)), sizeof((t)->key), sizeof(*(t)), \
+	((t) = __apedsa_hashmap_del_internal_wrapper((t), (void *)APEDSA_ADDRESSOF((t)->key, (k)), sizeof((t)->key), sizeof(*(t)), \
 					       APEDSA_OFFSETOF((t), key), APEDSA_HASHMAP_MODE_BINARY))
 
 #define apedsa_hm_gets(t, k) (*apedsa_hm_getp(t, k))
@@ -179,7 +179,7 @@ extern size_t apedsa_hashmap_tombstone_count(void *a, size_t kv_size);
 #define apedsa_hm_load_factor(a) apedsa_hashmap_load_factor(a, sizeof(*(a)))
 #define apedsa_hm_tombstone_count(a) apedsa_hashmap_tombstone_count(a, sizeof(*(a)))
 
-#define apedsa_shm_len(t) (apedsa_da_count((t) - 1) - 1)
+#define apedsa_shm_len(t) ((t) ? (apedsa_da_count((t) - 1) - 1) : 0)
 
 #define apedsa_shm_put(t, k, v)                                                                                                \
 	((t) = __apedsa_hashmap_put_internal_wrapper((t), (void *)(k), sizeof((k)), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING), \
@@ -187,7 +187,7 @@ extern size_t apedsa_hashmap_tombstone_count(void *a, size_t kv_size);
 
 #define apedsa_shm_puts(t, s)                                                                                                  \
 	((t) = __apedsa_hashmap_put_internal_wrapper((t), (s).key, sizeof((s).key), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING), \
-	 (t)[apedsa_da_temp((t) - 1)].value = (v))
+	 (t)[apedsa_da_temp((t) - 1)] = (s))
 
 #define apedsa_shm_geti(t, k)                                                                                                       \
 	((t) = __apedsa_hashmap_get_internal_wrapper((t), (void *)(k), sizeof((t)->key), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING), \

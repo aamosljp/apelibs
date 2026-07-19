@@ -373,6 +373,7 @@ ape_line_error ape_line_last_error(void);
 
 #ifdef APE_LINE_IMPLEMENTATION
 
+
 #ifndef APE_LINE_IMPLEMENTATION_INCLUDED
 #define APE_LINE_IMPLEMENTATION_INCLUDED
 
@@ -407,7 +408,9 @@ ape_line_error ape_line_last_error(void);
 #include <fcntl.h>
 #include <errno.h>
 
+
 /* BEGIN ape_line_editor.c */
+
 
 APE_LINE_DEF void ape_line_editor_reset(ape_line_editor *e)
 {
@@ -502,6 +505,7 @@ APE_LINE_DEF int ape_line_editor_set_str(ape_line_editor *e, char *s, size_t len
 }
 /* END ape_line_editor.c */
 
+
 /* BEGIN ape_line_error.c */
 
 ape_line_error _ape_line_last_error = APE_LINE_ERROR_NONE;
@@ -531,7 +535,9 @@ APE_LINE_DEF ape_line_error ape_line_last_error()
 }
 /* END ape_line_error.c */
 
+
 /* BEGIN ape_line_history.c */
+
 
 static ape_line_history _ape_line_history_ = { 0 };
 
@@ -685,7 +691,9 @@ APE_LINE_DEF int ape_line_history_set_dirty()
 }
 /* END ape_line_history.c */
 
+
 /* BEGIN ape_line_main.c */
+
 
 static ape_line_state _ape_line_state_g = { 0 };
 

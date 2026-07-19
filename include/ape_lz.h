@@ -102,7 +102,7 @@
  *   #include "ape_pack.h"
  * 
  *   int main(void) {
- *       ApePackReader reader = ape_pack_reader_from("hello world", 11);
+ *       ApePackReader *reader = ape_pack_reader_from("hello world", 11);
  *       char buf[12];
  *       ape_pack_reader_read(reader, buf, 11);
  *       printf("%s\n", buf); // Should print "hello world"
@@ -224,15 +224,15 @@ extern "C" {
 
 typedef struct {
 	int endianess; // 0 = little endian, 1 = big endian
-	uint32_t size;
-	uint32_t offset;
+	unsigned int size;
+	unsigned int offset;
 	unsigned char *data;
 } ApePackReader;
 
 typedef struct {
 	int endianess; // 0 = little endian, 1 = big endian
-	uint32_t size;
-	uint32_t offset;
+	unsigned int size;
+	unsigned int offset;
 	unsigned char *data;
 } ApePackWriter;
 
@@ -258,14 +258,8 @@ int64_t ape_pack_reader_read_i64(ApePackReader *reader);
 float ape_pack_reader_read_f32(ApePackReader *reader);
 double ape_pack_reader_read_f64(ApePackReader *reader);
 
-/* String reads are always length-prefixed */
-char *ape_pack_reader_read_str(ApePackReader *reader);
-
 /* Raw byte reads (no endianness conversion) */
-uint32_t ape_pack_reader_read_bytes(ApePackReader *reader, char *out, uint32_t len);
-
-/* Length-prefixed byte reads */
-uint32_t ape_pack_reader_read_bytes_n(ApePackReader *reader, char *out);
+size_t ape_pack_reader_read(ApePackReader *reader, char *out, size_t len);
 
 /* Writer creation and control */
 ApePackWriter ape_pack_writer_to(void *data, unsigned int size);
@@ -287,14 +281,8 @@ void ape_pack_writer_write_i64(ApePackWriter *writer, int64_t value);
 void ape_pack_writer_write_f32(ApePackWriter *writer, float value);
 void ape_pack_writer_write_f64(ApePackWriter *writer, double value);
 
-/* String writes are always length-prefixed */
-void ape_pack_writer_write_str(ApePackWriter *writer, const char *str);
-
 /* Raw byte writes (no endianness conversion) */
-void ape_pack_writer_write_bytes(ApePackWriter *writer, void *data, uint32_t len);
-
-/* Length-prefixed byte writes */
-void ape_pack_writer_write_bytes_n(ApePackWriter *writer, const void *data, uint32_t len);
+void ape_pack_writer_write(ApePackWriter *writer, void *data, size_t len);
 
 #if defined(__cplusplus)
 }
@@ -307,6 +295,7 @@ void ape_pack_writer_write_bytes_n(ApePackWriter *writer, const void *data, uint
 #endif
 
 #ifdef APE_PACK_IMPLEMENTATION
+
 
 #ifndef APE_PACK_IMPLEMENTATION_INCLUDED
 #define APE_PACK_IMPLEMENTATION_INCLUDED
@@ -332,7 +321,9 @@ void ape_pack_writer_write_bytes_n(ApePackWriter *writer, const void *data, uint
 
 #include <string.h>
 
+
 /* BEGIN ape_pack.c */
+
 
 /* ============================================================================
  * Reader Implementation
@@ -467,20 +458,10 @@ APE_PACK_DEF double ape_pack_reader_read_f64(ApePackReader *reader)
 	return result;
 }
 
-/* Length-prefixed */
-APE_PACK_DEF char *ape_pack_reader_read_str(ApePackReader *reader)
-{
-	size_t len = ape_pack_reader_read_u32(reader);
-	char *str = APE_PACK_MALLOC(len + 1);
-	ape_pack_reader_read_bytes(reader, str, len);
-	str[len] = '\0';
-	return str;
-}
-
-APE_PACK_DEF uint32_t ape_pack_reader_read_bytes(ApePackReader *reader, char *out, uint32_t len)
+APE_PACK_DEF size_t ape_pack_reader_read(ApePackReader *reader, char *out, size_t len)
 {
 	if (reader->offset + len > reader->size) {
-		APE_PACK_LOG_WARN("read: would exceed bounds (offset %u + %u > size %u)", reader->offset, len, reader->size);
+		APE_PACK_LOG_WARN("read: would exceed bounds (offset %u + %zu > size %u)", reader->offset, len, reader->size);
 		return 0;
 	}
 	size_t read = 0;
@@ -489,13 +470,6 @@ APE_PACK_DEF uint32_t ape_pack_reader_read_bytes(ApePackReader *reader, char *ou
 		read++;
 	}
 	return read;
-}
-
-/* Length-prefixed */
-APE_PACK_DEF uint32_t ape_pack_reader_read_bytes_n(ApePackReader *reader, char *out)
-{
-	uint32_t len = ape_pack_reader_read_u32(reader);
-	return ape_pack_reader_read_bytes(reader, out, len);
 }
 
 /* ============================================================================
@@ -609,25 +583,12 @@ APE_PACK_DEF void ape_pack_writer_write_f64(ApePackWriter *writer, double value)
 	ape_pack_writer_write_u64(writer, bits);
 }
 
-APE_PACK_DEF void ape_pack_writer_write_str(ApePackWriter *writer, const char *str)
-{
-	size_t len = strlen(str);
-	ape_pack_writer_write_u16(writer, len);
-	ape_pack_writer_write_bytes(writer, (void *)str, len);
-}
-
-APE_PACK_DEF void ape_pack_writer_write_bytes(ApePackWriter *writer, void *data, uint32_t len)
+APE_PACK_DEF void ape_pack_writer_write(ApePackWriter *writer, void *data, size_t len)
 {
 	size_t i;
 	for (i = 0; i < len; i++) {
 		ape_pack_writer_write_u8(writer, ((unsigned char *)data)[i]);
 	}
-}
-
-APE_PACK_DEF void ape_pack_writer_write_bytes_n(ApePackWriter *writer, const void *data, uint32_t len)
-{
-	ape_pack_writer_write_u32(writer, len);
-	ape_pack_writer_write_bytes(writer, (void *)data, len);
 }
 /* END ape_pack.c */
 
@@ -765,6 +726,7 @@ const char *ape_lz4_error_string(ApeLZ4Error err);
 
 #ifdef APE_LZ_IMPLEMENTATION
 
+
 #ifndef APE_LZ_IMPLEMENTATION_INCLUDED
 #define APE_LZ_IMPLEMENTATION_INCLUDED
 
@@ -790,7 +752,9 @@ const char *ape_lz4_error_string(ApeLZ4Error err);
 #include <string.h>
 #include <stdint.h>
 
+
 /* BEGIN ape_lz.c */
+
 
 /* ============================================================================
  * Constants

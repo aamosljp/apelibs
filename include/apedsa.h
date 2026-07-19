@@ -270,7 +270,7 @@ extern size_t apedsa_hashmap_tombstone_count(void *a, size_t kv_size);
 #define apedsa_hm_getp(t, k) ((void)apedsa_hm_geti(t, k), &(t)[apedsa_da_temp((t) - 1)])
 
 #define apedsa_hm_del(t, k)                                                                                                  \
-	(__apedsa_hashmap_del_internal_wrapper((t), (void *)APEDSA_ADDRESSOF((t)->key, (k)), sizeof((t)->key), sizeof(*(t)), \
+	((t) = __apedsa_hashmap_del_internal_wrapper((t), (void *)APEDSA_ADDRESSOF((t)->key, (k)), sizeof((t)->key), sizeof(*(t)), \
 					       APEDSA_OFFSETOF((t), key), APEDSA_HASHMAP_MODE_BINARY))
 
 #define apedsa_hm_gets(t, k) (*apedsa_hm_getp(t, k))
@@ -290,7 +290,7 @@ extern size_t apedsa_hashmap_tombstone_count(void *a, size_t kv_size);
 #define apedsa_hm_load_factor(a) apedsa_hashmap_load_factor(a, sizeof(*(a)))
 #define apedsa_hm_tombstone_count(a) apedsa_hashmap_tombstone_count(a, sizeof(*(a)))
 
-#define apedsa_shm_len(t) (apedsa_da_count((t) - 1) - 1)
+#define apedsa_shm_len(t) ((t) ? (apedsa_da_count((t) - 1) - 1) : 0)
 
 #define apedsa_shm_put(t, k, v)                                                                                                \
 	((t) = __apedsa_hashmap_put_internal_wrapper((t), (void *)(k), sizeof((k)), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING), \
@@ -298,7 +298,7 @@ extern size_t apedsa_hashmap_tombstone_count(void *a, size_t kv_size);
 
 #define apedsa_shm_puts(t, s)                                                                                                  \
 	((t) = __apedsa_hashmap_put_internal_wrapper((t), (s).key, sizeof((s).key), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING), \
-	 (t)[apedsa_da_temp((t) - 1)].value = (v))
+	 (t)[apedsa_da_temp((t) - 1)] = (s))
 
 #define apedsa_shm_geti(t, k)                                                                                                       \
 	((t) = __apedsa_hashmap_get_internal_wrapper((t), (void *)(k), sizeof((t)->key), sizeof(*(t)), APEDSA_HASHMAP_MODE_STRING), \
@@ -427,6 +427,7 @@ static T *__apedsa_hashmap_put_internal_batch_wrapper(T *hashmap, size_t count, 
 
 #ifdef APEDSA_IMPLEMENTATION
 
+
 #ifndef APEDSA_IMPLEMENTATION_INCLUDED
 #define APEDSA_IMPLEMENTATION_INCLUDED
 
@@ -454,6 +455,7 @@ static T *__apedsa_hashmap_put_internal_batch_wrapper(T *hashmap, size_t count, 
 
 #include <stdint.h>
 
+
 /* BEGIN da.c */
 
 void *__apedsa_da_growf(void *da, size_t esz, size_t growby, size_t min_cap)
@@ -477,6 +479,7 @@ void *__apedsa_da_growf(void *da, size_t esz, size_t growby, size_t min_cap)
 	return new_da;
 }
 /* END da.c */
+
 
 /* BEGIN hashmap.c */
 
@@ -778,18 +781,19 @@ ApedsaHashIndex *__apedsa_hashmap_rehash(size_t slot_count, ApedsaHashIndex *old
 
 APEDSA_PRIVATE int __apedsa_is_key_equal(void *a, void *key, size_t key_size, size_t kv_size, size_t i, int mode)
 {
-	// clang-format off
-    size_t len = mode >= APEDSA_HASHMAP_MODE_STRING ? strlen((char *)key) : key_size;
-    if (len <= 8) { // compare bytes directly for small keys
-        size_t key_masked = len == 8 ? *(size_t*)key : ((size_t)KEY_SIZE_MASK(len) & *(size_t*)key);
-        char *key2 = mode >= APEDSA_HASHMAP_MODE_STRING ? (char *)*(char **)((char *)a + i * kv_size)
-            : (char *)a + i * kv_size;
-        size_t key2_masked = len == 8 ? *(size_t*)key2 : ((size_t)KEY_SIZE_MASK(len) & *(size_t*)key2);
-        return key_masked == key2_masked;
-    }
-	// clang-format on
+	// // clang-format off
+	//    size_t len = mode >= APEDSA_HASHMAP_MODE_STRING ? strlen((char *)key) : key_size;
+	//    if (len <= 8) { // compare bytes directly for small keys
+	//        size_t key_masked = len == 8 ? *(size_t*)key : ((size_t)KEY_SIZE_MASK(len) & *(size_t*)key);
+	//        char *key2 = mode >= APEDSA_HASHMAP_MODE_STRING ? (char *)*(char **)((char *)a + i * kv_size)
+	//            : (char *)a + i * kv_size;
+	//        size_t key2_masked = len == 8 ? *(size_t*)key2 : ((size_t)KEY_SIZE_MASK(len) & *(size_t*)key2);
+	//        return key_masked == key2_masked;
+	//    }
+	// // clang-format on
 	if (mode >= APEDSA_HASHMAP_MODE_STRING)
-		return strcmp(*(char **)((char *)a + i * kv_size), (char *)key) == 0;
+		return strlen(*(char **)((char *)a + i * kv_size)) == strlen((char *)key) &&
+            strcmp(*(char **)((char *)a + i * kv_size), (char *)key) == 0;
 	return memcmp((char *)a + i * kv_size, key, key_size) == 0;
 }
 
@@ -996,6 +1000,7 @@ void *__apedsa_hashmap_get_internal(void *a, void *key, size_t key_size, size_t 
 		a = __apedsa_da_growf(a, kv_size, 0, 1);
 		memset(a, 0, kv_size);
 		apedsa_da_temp(a) = APEDSA_HASHMAP_INDEX_EMPTY;
+        apedsa_da_header(a)->count = 1;
 		return (char *)a + kv_size;
 	}
 	void *da = a;
@@ -1026,10 +1031,10 @@ void *__apedsa_hashmap_del_internal(void *a, void *key, size_t key_size, size_t 
 	a = (char *)a - kv_size;
 	ApedsaHashIndex *table = (ApedsaHashIndex *)apedsa_da_header(a)->aux;
 	if (table == NULL)
-		return a;
+		return (char *)a + kv_size;
 	ptrdiff_t slot = __apedsa_hashmap_find_slot(da, key, key_size, kv_size, mode);
 	if (slot < 0)
-		return a;
+		return (char *)a + kv_size;
 #ifdef APEDSA_HASHMAP_STATS
 	table->stat_total_operations++;
 #endif
@@ -1057,11 +1062,20 @@ void *__apedsa_hashmap_del_internal(void *a, void *key, size_t key_size, size_t 
 		b->slots[i].index = old_index;
 	}
 	apedsa_da_header(a)->count--;
-	if (table->used_count < table->used_count_shrink_threshold && table->slot_count > APEDSA_HASHMAP_BUCKET_SIZE)
-		apedsa_da_header(a)->aux = __apedsa_hashmap_rehash(table->slot_count >> 1, table);
-	else if (table->tombstone_count > table->tombstone_count_threshold)
-		apedsa_da_header(a)->aux = __apedsa_hashmap_rehash(table->slot_count, table);
-
+	if (table->used_count < table->used_count_shrink_threshold && table->slot_count > APEDSA_HASHMAP_BUCKET_SIZE) {
+        ApedsaHashIndex *new_table = __apedsa_hashmap_rehash(table->slot_count >> 1, table);
+        if (table) {
+            APEDSA_FREE(table);
+        }
+        apedsa_da_header(a)->aux = table = new_table;
+    }
+	else if (table->tombstone_count > table->tombstone_count_threshold) {
+        ApedsaHashIndex *new_table = __apedsa_hashmap_rehash(table->slot_count, table);
+        if (table) {
+            APEDSA_FREE(table);
+        }
+        apedsa_da_header(a)->aux = table = new_table;
+    }
 	return (char *)a + kv_size;
 }
 
@@ -1070,7 +1084,7 @@ void *__apedsa_hashmap_reserve_internal(void *a, size_t count, size_t kv_size)
 	if (a == NULL) {
 		a = __apedsa_da_growf(a, kv_size, count + 1, 0);
 		memset(a, 0, kv_size * (count + 1));
-		apedsa_da_header(a)->count = count + 1; // reserve space for invalid index
+		apedsa_da_header(a)->count = 1; // reserve space for invalid index
 		a = (char *)a + kv_size;
 	}
 	a = (char *)a - kv_size;
@@ -1121,7 +1135,7 @@ void *__apedsa_hashmap_clear_internal(void *a, size_t kv_size)
 	}
 	table->used_count = 0;
 	apedsa_string_arena_reset(&table->string);
-	table = __apedsa_hashmap_rehash(0, table);
+	table = __apedsa_hashmap_rehash(APEDSA_HASHMAP_BUCKET_SIZE, table);
 	apedsa_da_header(a)->aux = table;
 	return (char *)a + kv_size;
 }
@@ -1157,6 +1171,7 @@ size_t apedsa_hashmap_tombstone_count(void *a, size_t kv_size)
 	return table ? table->tombstone_count : 0;
 }
 /* END hashmap.c */
+
 
 /* BEGIN string.c */
 
